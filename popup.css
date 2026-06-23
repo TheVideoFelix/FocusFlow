@@ -588,6 +588,16 @@ input[type="time"]:focus {
   box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
+/* Hide number input spin buttons */
+input[type="number"]::-webkit-inner-spin-button, 
+input[type="number"]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
 /* SCHEDULES TAB SPECIFICS */
 .schedules-header {
   display: flex;
