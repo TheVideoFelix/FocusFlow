@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // React to storage updates (e.g. if the user cancels the timer in the popup, or a schedule changes)
   api.storage.onChanged.addListener(async (changes, namespace) => {
     if (namespace !== 'local') return;
+    if (changes.theme) {
+      applyTheme(changes.theme.newValue || 'system');
+    }
     if (changes.isCurrentlyBlocked || changes.timerActive || changes.timerEnd || changes.activeBlockedSites || changes.whitelist) {
       await loadBlockDetails();
     }
@@ -42,17 +45,32 @@ document.addEventListener('DOMContentLoaded', async () => {
    ========================================== */
 async function initTheme() {
   const data = await api.storage.local.get('theme');
-  const theme = data.theme || 'dark';
+  const theme = data.theme || 'system';
   applyTheme(theme);
+  
+  // Listen for OS theme changes if in system mode
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+    const d = await api.storage.local.get('theme');
+    if (!d.theme || d.theme === 'system') applyTheme('system');
+  });
 }
 
 function applyTheme(theme) {
+  let isDark = true;
   if (theme === 'light') {
-    document.body.classList.remove('dark-mode');
-    document.body.classList.add('light-mode');
+    isDark = false;
+  } else if (theme === 'dark') {
+    isDark = true;
   } else {
+    isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  if (isDark) {
     document.body.classList.remove('light-mode');
     document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+    document.body.classList.add('light-mode');
   }
 }
 
