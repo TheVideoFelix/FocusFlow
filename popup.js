@@ -691,25 +691,26 @@ async function renderSchedules() {
   const prevBtn = document.getElementById('btn-sch-prev');
   const nextBtn = document.getElementById('btn-sch-next');
   
+  const newPrevBtn = prevBtn.cloneNode(true);
+  const newNextBtn = nextBtn.cloneNode(true);
+  prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+  nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+
+  const controlsRow = document.getElementById('schedules-carousel-controls');
   if (schedules.length <= 1) {
-    prevBtn.classList.add('hidden');
-    nextBtn.classList.add('hidden');
+    controlsRow.style.display = 'none';
   } else {
+    controlsRow.style.display = 'flex';
     const updateButtons = () => {
-      if (container.scrollLeft <= 10) prevBtn.classList.add('hidden');
-      else prevBtn.classList.remove('hidden');
+      if (container.scrollLeft <= 10) newPrevBtn.classList.add('hidden');
+      else newPrevBtn.classList.remove('hidden');
       
-      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) nextBtn.classList.add('hidden');
-      else nextBtn.classList.remove('hidden');
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) newNextBtn.classList.add('hidden');
+      else newNextBtn.classList.remove('hidden');
     };
     
     setTimeout(updateButtons, 50);
     container.addEventListener('scroll', updateButtons);
-    
-    const newPrevBtn = prevBtn.cloneNode(true);
-    const newNextBtn = nextBtn.cloneNode(true);
-    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
     
     newPrevBtn.addEventListener('click', () => {
       container.scrollBy({ left: -container.clientWidth, behavior: 'smooth' });
