@@ -190,8 +190,13 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
     const existingRules = await api.declarativeNetRequest.getDynamicRules();
     const existingIds = existingRules.map(r => r.id);
     
+    // Ensure new IDs never overlap with old IDs to bypass browser deletion bugs
+    let maxId = 0;
+    if (existingIds.length > 0) {
+      maxId = Math.max(...existingIds);
+    }
+    let ruleIdCounter = maxId + 1;
     const rulesToAdd = [];
-    let ruleIdCounter = 1;
     
     if (blockActive) {
       const validDomains = domains.filter(d => typeof d === 'string' && d.trim().length > 0);
@@ -263,3 +268,34 @@ async function enforceBlockingOnOpenTabs(sites, whitelist) {
     console.error('Error sweeping open tabs:', err);
   }
 }
+
+// Secondary Unbreachable Firewall: Catch any navigation that slips past DNR
+api.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    if (changeInfo.url.startsWith('about:') || changeInfo.url.startsWith('moz-extension:') || changeInfo.url.startsWith('chrome-extension:')) return;
+    
+    const data = await api.storage.local.get(['isCurrentlyBlocked', 'blockedSites', 'whitelist']);
+    if (data.isCurrentlyBlocked) {
+      const sites = data.blockedSites || [];
+      const whitelist = data.whitelist || [];
+      
+      try {
+        const urlObj = new URL(changeInfo.url);
+        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') return;
+        
+        const host = urlObj.hostname.toLowerCase();
+        
+        const isWhitelisted = whitelist.some(w => host === w || host.endsWith('.' + w));
+        if (isWhitelisted) return;
+        
+        const isBlocked = sites.some(s => host === s || host.endsWith('.' + s));
+        if (isBlocked) {
+          const redirectUrl = api.runtime.getURL('/blocked.html') + '?url=' + encodeURIComponent(changeInfo.url);
+          await api.tabs.update(tabId, { url: redirectUrl });
+        }
+      } catch (e) {
+        // Invalid URL
+      }
+    }
+  }
+});
