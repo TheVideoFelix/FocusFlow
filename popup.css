@@ -917,19 +917,13 @@ input:checked:disabled + .slider {
 .site-chip {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  padding: 6px 10px;
-  border-radius: 20px;
+  padding: 4px 8px;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.site-chip:hover {
-  border-color: var(--danger);
-  background: var(--danger-glow);
-  color: var(--text-primary);
+  font-size: 11px;
+  margin: 2px;
 }
 
 .site-chip span {
@@ -1125,6 +1119,7 @@ button:disabled {
 .btn-success-gradient:hover {
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4) !important;
   opacity: 0.95;
+  color: white !important;
 }
 
 .btn-danger-gradient {
@@ -1137,16 +1132,19 @@ button:disabled {
 .btn-danger-gradient:hover {
   box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4) !important;
   opacity: 0.95;
+  color: white !important;
 }
 
 .chip-danger {
   background: rgba(239, 68, 68, 0.1) !important;
   border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: var(--danger) !important;
 }
 
 .chip-success {
   background: rgba(16, 185, 129, 0.1) !important;
   border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  color: var(--success) !important;
 }
 
 /* Break Preset Overrides */
