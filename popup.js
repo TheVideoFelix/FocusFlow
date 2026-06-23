@@ -402,10 +402,23 @@ async function renderSites() {
    SCHEDULES
    ========================================== */
 let selectedDays = [];
+let editScheduleId = null;
 function initScheduleForm() {
   const formCard = document.getElementById('schedule-form-card');
-  document.getElementById('btn-new-schedule').addEventListener('click', () => { formCard.classList.remove('hidden'); selectedDays = []; document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected')); });
-  document.getElementById('btn-cancel-schedule').addEventListener('click', () => formCard.classList.add('hidden'));
+  document.getElementById('btn-new-schedule').addEventListener('click', () => { 
+    formCard.classList.remove('hidden'); 
+    selectedDays = []; 
+    editScheduleId = null;
+    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected')); 
+    document.getElementById('schedule-name').value = '';
+    document.getElementById('schedule-start').value = '';
+    document.getElementById('schedule-end').value = '';
+    document.getElementById('btn-save-schedule').textContent = 'Save Schedule';
+  });
+  document.getElementById('btn-cancel-schedule').addEventListener('click', () => {
+    formCard.classList.add('hidden');
+    editScheduleId = null;
+  });
   
   document.querySelectorAll('.day-btn').forEach(btn => btn.addEventListener('click', () => {
     const day = parseInt(btn.getAttribute('data-day'), 10);
@@ -420,10 +433,23 @@ function initScheduleForm() {
     if (!startTime || !endTime || selectedDays.length === 0) return alert('Select time and days.');
     
     const data = await api.storage.local.get('schedules');
-    const schedules = data.schedules || [];
-    schedules.push({ id: 'sch_' + Date.now(), name, startTime, endTime, days: [...selectedDays], enabled: true });
+    let schedules = data.schedules || [];
+    
+    if (editScheduleId) {
+      const idx = schedules.findIndex(s => s.id === editScheduleId);
+      if (idx !== -1) {
+        schedules[idx].name = name;
+        schedules[idx].startTime = startTime;
+        schedules[idx].endTime = endTime;
+        schedules[idx].days = [...selectedDays];
+      }
+    } else {
+      schedules.push({ id: 'sch_' + Date.now(), name, startTime, endTime, days: [...selectedDays], enabled: true });
+    }
+    
     await api.storage.local.set({ schedules });
     formCard.classList.add('hidden');
+    editScheduleId = null;
   });
 }
 
@@ -456,6 +482,7 @@ async function renderSchedules() {
           <input type="checkbox" class="schedule-toggle" ${schedule.enabled ? 'checked' : ''} ${data.isCurrentlyBlocked ? 'disabled' : ''}/>
           <span class="slider"></span>
         </label>
+        <button class="btn-edit-schedule" ${data.isCurrentlyBlocked ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
         <button class="btn-delete-schedule" ${data.isCurrentlyBlocked ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
       </div>
     `;
@@ -466,6 +493,23 @@ async function renderSchedules() {
         const list = d.schedules || [];
         const s = list.find(x => x.id === schedule.id);
         if (s) { s.enabled = e.target.checked; await api.storage.local.set({ schedules: list }); }
+      });
+      
+      item.querySelector('.btn-edit-schedule').addEventListener('click', () => {
+        editScheduleId = schedule.id;
+        document.getElementById('schedule-name').value = schedule.name;
+        document.getElementById('schedule-start').value = schedule.startTime;
+        document.getElementById('schedule-end').value = schedule.endTime;
+        
+        selectedDays = [...schedule.days];
+        document.querySelectorAll('.day-btn').forEach(b => {
+          const day = parseInt(b.getAttribute('data-day'), 10);
+          if (selectedDays.includes(day)) b.classList.add('selected');
+          else b.classList.remove('selected');
+        });
+        
+        document.getElementById('btn-save-schedule').textContent = 'Update Schedule';
+        document.getElementById('schedule-form-card').classList.remove('hidden');
       });
       
       item.querySelector('.btn-delete-schedule').addEventListener('click', async () => {

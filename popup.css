@@ -764,8 +764,8 @@ input:checked + .slider:before {
   transform: translateX(14px);
 }
 
-/* Trash Icon Button */
-.btn-delete-schedule {
+/* Action Icon Buttons */
+.btn-delete-schedule, .btn-edit-schedule {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -780,6 +780,11 @@ input:checked + .slider:before {
 .btn-delete-schedule:hover {
   color: var(--danger);
   background: var(--danger-glow);
+}
+
+.btn-edit-schedule:hover {
+  color: var(--accent-light);
+  background: var(--accent-glow);
 }
 
 /* Empty State */
