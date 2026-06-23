@@ -183,7 +183,7 @@
       
       <!-- TAB 3: BLOCK LIST -->
       <div id="tab-sites" class="tab-pane">
-        <div class="sites-section">
+        <div class="sites-section" style="margin-bottom: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div>
               <h3 style="margin: 0; margin-bottom: 4px;">Manage Blocklist</h3>
@@ -196,6 +196,20 @@
             <button type="submit" class="btn btn-secondary-sm">Add</button>
           </form>
           <div id="sites-chips" class="sites-chips-container"></div>
+        </div>
+
+        <div class="sites-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <h3 style="margin: 0; margin-bottom: 4px;">Whitelist (Exceptions)</h3>
+              <p class="section-desc" style="margin: 0;">Allow specific subdomains (e.g. music.youtube.com).</p>
+            </div>
+          </div>
+          <form id="add-whitelist-form" class="add-site-group">
+            <input type="text" id="whitelist-domain" placeholder="e.g. music.youtube.com" required />
+            <button type="submit" class="btn btn-secondary-sm">Allow</button>
+          </form>
+          <div id="whitelist-chips" class="sites-chips-container"></div>
         </div>
       </div>
 

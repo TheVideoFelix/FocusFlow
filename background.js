@@ -110,8 +110,9 @@ api.storage.onChanged.addListener(async (changes, namespace) => {
 
 async function evaluateBlockingState() {
   try {
-    const data = await api.storage.local.get(['blockedSites', 'schedules', 'timerActive', 'timerEnd', 'isPaused']);
+    const data = await api.storage.local.get(['blockedSites', 'whitelist', 'schedules', 'timerActive', 'timerEnd', 'isPaused']);
     const sites = data.blockedSites || [];
+    const whitelist = data.whitelist || [];
     const schedules = data.schedules || [];
     const timerEnd = data.timerEnd || 0;
     const timerActive = data.timerActive || false;
@@ -173,7 +174,7 @@ async function evaluateBlockingState() {
       }
     }
     
-    await updateBlockingRules(sites, shouldBlock);
+    await updateBlockingRules(sites, whitelist, shouldBlock);
     
     await api.storage.local.set({
       isCurrentlyBlocked: shouldBlock,
@@ -184,20 +185,34 @@ async function evaluateBlockingState() {
   }
 }
 
-async function updateBlockingRules(domains, blockActive) {
+async function updateBlockingRules(domains, whitelist, blockActive) {
   const existingRules = await api.declarativeNetRequest.getDynamicRules();
   const existingIds = existingRules.map(r => r.id);
   
   const rulesToAdd = [];
+  let ruleIdCounter = 1;
+  
   if (blockActive && domains.length > 0) {
-    domains.forEach((domain, index) => {
+    domains.forEach((domain) => {
       rulesToAdd.push({
-        id: index + 1,
+        id: ruleIdCounter++,
         priority: 1,
         action: { 
           type: 'redirect', 
           redirect: { regexSubstitution: api.runtime.getURL('/blocked.html') + '?url=\\0' } 
         },
+        condition: { 
+          regexFilter: `^https?://([^/]+\\.)?${domain.replace(/\\./g, '\\\\.')}(/.*)?$`, 
+          resourceTypes: ['main_frame'] 
+        }
+      });
+    });
+    
+    whitelist.forEach((domain) => {
+      rulesToAdd.push({
+        id: ruleIdCounter++,
+        priority: 2,
+        action: { type: 'allow' },
         condition: { 
           regexFilter: `^https?://([^/]+\\.)?${domain.replace(/\\./g, '\\\\.')}(/.*)?$`, 
           resourceTypes: ['main_frame'] 

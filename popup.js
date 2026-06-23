@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSettings();
   initTimerPanel();
   initScheduleForm();
-  initBlocklistForm();
+  initSiteForms();
   initHistoryModal();
 
   api.storage.onChanged.addListener(async (changes, namespace) => {
@@ -372,7 +372,7 @@ async function initCurrentSiteBanners() {
   } catch (e) {}
 }
 
-function initBlocklistForm() {
+function initSiteForms() {
   document.getElementById('add-site-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = document.getElementById('site-domain');
@@ -387,15 +387,33 @@ function initBlocklistForm() {
     }
     input.value = '';
   });
+
+  document.getElementById('add-whitelist-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('whitelist-domain');
+    let domain = input.value.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+    if (!/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(domain)) return alert('Invalid domain');
+    
+    const data = await api.storage.local.get('whitelist');
+    const list = data.whitelist || [];
+    if (!list.includes(domain)) {
+      list.push(domain);
+      await api.storage.local.set({ whitelist: list });
+    }
+    input.value = '';
+  });
 }
 
 async function renderSites() {
-  const data = await api.storage.local.get(['blockedSites', 'isCurrentlyBlocked']);
+  const data = await api.storage.local.get(['blockedSites', 'whitelist', 'isCurrentlyBlocked']);
   const sites = data.blockedSites || [];
+  const whitelist = data.whitelist || [];
   const container = document.getElementById('sites-chips');
+  const wContainer = document.getElementById('whitelist-chips');
   
   document.querySelectorAll('.btn-block-current').forEach(btn => btn.disabled = data.isCurrentlyBlocked);
   document.querySelector('#add-site-form button').disabled = data.isCurrentlyBlocked;
+  document.querySelector('#add-whitelist-form button').disabled = data.isCurrentlyBlocked;
 
   container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
   sites.forEach(site => {
@@ -409,6 +427,22 @@ async function renderSites() {
       };
     }
     container.appendChild(chip);
+  });
+
+  wContainer.innerHTML = whitelist.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No exceptions.</p>';
+  whitelist.forEach(site => {
+    const chip = document.createElement('div');
+    chip.className = `site-chip ${data.isCurrentlyBlocked ? 'disabled' : ''}`;
+    chip.style.borderColor = 'var(--success)';
+    chip.style.color = 'var(--success)';
+    chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+    if (!data.isCurrentlyBlocked) {
+      chip.querySelector('.btn-remove-site').onclick = async () => {
+        const d = await api.storage.local.get('whitelist');
+        await api.storage.local.set({ whitelist: (d.whitelist || []).filter(s => s !== site) });
+      };
+    }
+    wContainer.appendChild(chip);
   });
 }
 
