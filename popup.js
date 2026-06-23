@@ -495,9 +495,10 @@ function initScheduleForm() {
         schedules[idx].startTime = startTime;
         schedules[idx].endTime = endTime;
         schedules[idx].days = [...selectedDays];
+        schedules[idx].enabled = false;
       }
     } else {
-      schedules.push({ id: 'sch_' + Date.now(), name, startTime, endTime, days: [...selectedDays], enabled: true });
+      schedules.push({ id: 'sch_' + Date.now(), name, startTime, endTime, days: [...selectedDays], enabled: false });
     }
     
     await api.storage.local.set({ schedules });
@@ -507,9 +508,10 @@ function initScheduleForm() {
 }
 
 async function renderSchedules() {
-  const data = await api.storage.local.get(['schedules', 'isCurrentlyBlocked']);
+  const data = await api.storage.local.get(['schedules', 'isCurrentlyBlocked', 'activeScheduleIds']);
   const container = document.getElementById('schedules-list');
   const schedules = data.schedules || [];
+  const activeIds = data.activeScheduleIds || [];
   
   document.getElementById('btn-new-schedule').disabled = false;
   
@@ -533,11 +535,11 @@ async function renderSchedules() {
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
           <label class="switch">
-            <input type="checkbox" class="schedule-toggle" ${schedule.enabled ? 'checked' : ''} ${data.isCurrentlyBlocked ? 'disabled' : ''}/>
+            <input type="checkbox" class="schedule-toggle" ${schedule.enabled ? 'checked' : ''} ${activeIds.includes(schedule.id) ? 'disabled' : ''}/>
             <span class="slider"></span>
           </label>
-          <button class="btn-edit-schedule" ${data.isCurrentlyBlocked ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-          <button class="btn-delete-schedule" ${data.isCurrentlyBlocked ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+          <button class="btn-edit-schedule" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+          <button class="btn-delete-schedule" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
         </div>
       </div>
       <div class="schedule-sites">
@@ -559,8 +561,8 @@ async function renderSchedules() {
       schSites.forEach(site => {
         const chip = document.createElement('div');
         chip.className = 'sch-site-chip';
-        chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-site" data-site="${escapeHtml(site)}" ${data.isCurrentlyBlocked ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
-        if (!data.isCurrentlyBlocked) {
+        chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-site" data-site="${escapeHtml(site)}" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+        if (!activeIds.includes(schedule.id)) {
           chip.querySelector('.btn-remove-sch-site').onclick = async (e) => {
             const sDomain = e.currentTarget.getAttribute('data-site');
             const d = await api.storage.local.get('schedules');
@@ -595,7 +597,7 @@ async function renderSchedules() {
       }
     });
     
-    if (!data.isCurrentlyBlocked) {
+    if (!activeIds.includes(schedule.id)) {
       item.querySelector('.schedule-toggle').addEventListener('change', async (e) => {
         const d = await api.storage.local.get('schedules');
         const list = d.schedules || [];

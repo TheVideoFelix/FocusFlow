@@ -147,6 +147,7 @@ async function evaluateBlockingState() {
     const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
     
     let activeScheduleNames = [];
+    let activeScheduleIds = [];
     for (const schedule of schedules) {
       if (!schedule.enabled) continue;
       if (schedule.days.includes(currentDay)) {
@@ -165,6 +166,7 @@ async function evaluateBlockingState() {
         if (inTimeRange) {
           shouldBlock = true;
           activeScheduleNames.push(schedule.name);
+          activeScheduleIds.push(schedule.id);
           const schSites = schedule.blockedSites || [];
           schSites.forEach(s => activeSites.add(s));
         }
@@ -184,7 +186,8 @@ async function evaluateBlockingState() {
     await api.storage.local.set({
       isCurrentlyBlocked: shouldBlock,
       blockReason: blockReason,
-      activeBlockedSites: finalSitesToBlock
+      activeBlockedSites: finalSitesToBlock,
+      activeScheduleIds: activeScheduleIds
     });
     
     // Immediately sweep open tabs to enforce new block rules without requiring a reload
