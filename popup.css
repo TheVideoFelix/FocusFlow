@@ -1106,6 +1106,8 @@ button:disabled {
 .btn-warning-gradient {
   background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3) !important;
+  color: white !important;
+  border: none !important;
 }
 
 .btn-warning-gradient:hover {
@@ -1116,11 +1118,35 @@ button:disabled {
 .btn-success-gradient {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+  color: white !important;
+  border: none !important;
 }
 
 .btn-success-gradient:hover {
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4) !important;
   opacity: 0.95;
+}
+
+.btn-danger-gradient {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-danger-gradient:hover {
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4) !important;
+  opacity: 0.95;
+}
+
+.chip-danger {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.chip-success {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
 /* Break Preset Overrides */

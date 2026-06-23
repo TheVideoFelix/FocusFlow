@@ -429,7 +429,7 @@ async function renderSites() {
   container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
   sites.forEach(site => {
     const chip = document.createElement('div');
-    chip.className = `site-chip ${data.timerActive ? 'disabled' : ''}`;
+    chip.className = `site-chip chip-danger ${data.timerActive ? 'disabled' : ''}`;
     chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
     if (!data.timerActive) {
       chip.querySelector('.btn-remove-site').onclick = async () => {
@@ -443,7 +443,7 @@ async function renderSites() {
   wContainer.innerHTML = whitelist.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No exceptions.</p>';
   whitelist.forEach(site => {
     const chip = document.createElement('div');
-    chip.className = `site-chip ${data.timerActive ? 'disabled' : ''}`;
+    chip.className = `site-chip chip-success ${data.timerActive ? 'disabled' : ''}`;
     chip.style.borderColor = 'var(--success)';
     chip.style.color = 'var(--success)';
     chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
@@ -555,7 +555,7 @@ async function renderSchedules() {
         <div class="schedule-chips" id="sch-chips-${schedule.id}"></div>
         <form class="sch-site-form" data-id="${schedule.id}">
           <input type="text" placeholder="e.g. twitch.tv" required />
-          <button type="submit" class="btn btn-secondary-sm">Add</button>
+          <button type="submit" class="btn btn-secondary-sm btn-danger-gradient">Add</button>
         </form>
       </div>
       <div class="schedule-sites" style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
@@ -563,7 +563,7 @@ async function renderSchedules() {
         <div class="schedule-chips" id="sch-wl-chips-${schedule.id}"></div>
         <form class="sch-site-form sch-wl-form" data-id="${schedule.id}">
           <input type="text" placeholder="e.g. music.youtube.com" required />
-          <button type="submit" class="btn btn-secondary-sm">Allow</button>
+          <button type="submit" class="btn btn-secondary-sm btn-success-gradient">Allow</button>
         </form>
       </div>
     `;
@@ -576,7 +576,7 @@ async function renderSchedules() {
     } else {
       schSites.forEach(site => {
         const chip = document.createElement('div');
-        chip.className = 'sch-site-chip';
+        chip.className = 'sch-site-chip chip-danger';
         chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-site" data-site="${escapeHtml(site)}" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
         if (!activeIds.includes(schedule.id)) {
           chip.querySelector('.btn-remove-sch-site').onclick = async (e) => {
@@ -602,7 +602,7 @@ async function renderSchedules() {
     } else {
       schWhitelist.forEach(site => {
         const chip = document.createElement('div');
-        chip.className = 'sch-site-chip';
+        chip.className = 'sch-site-chip chip-success';
         chip.style.borderColor = 'var(--success)';
         chip.style.color = 'var(--success)';
         chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-wl" data-site="${escapeHtml(site)}" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
