@@ -90,7 +90,7 @@ api.storage.onChanged.addListener(async (changes, namespace) => {
 async function evaluateBlockingState() {
   try {
     const data = await api.storage.local.get(['blockedSites', 'whitelist', 'schedules', 'timerActive', 'timerEnd', 'isPaused']);
-    const sites = data.blockedSites || [];
+    const globalSites = data.blockedSites || [];
     const whitelist = data.whitelist || [];
     const schedules = data.schedules || [];
     const timerEnd = data.timerEnd || 0;
@@ -100,6 +100,7 @@ async function evaluateBlockingState() {
     const now = Date.now();
     let shouldBlock = false;
     let blockReason = '';
+    let activeSites = new Set();
     
     if (timerActive) {
       if (isPaused) {
@@ -109,6 +110,7 @@ async function evaluateBlockingState() {
         shouldBlock = true;
         const minutesLeft = Math.ceil((timerEnd - now) / 60000);
         blockReason = `Timer active (${minutesLeft} min remaining)`;
+        globalSites.forEach(s => activeSites.add(s));
         
         const timerAlarm = await api.alarms.get('timerExpired');
         if (!timerAlarm) {
@@ -139,46 +141,55 @@ async function evaluateBlockingState() {
       await api.alarms.clear('timerExpired');
     }
     
-    // Check Schedules if not blocked by timer
-    if (!shouldBlock && schedules.length > 0) {
-      const currentDate = new Date();
-      const currentDay = currentDate.getDay();
-      const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
-      
-      for (const schedule of schedules) {
-        if (!schedule.enabled) continue;
-        if (schedule.days.includes(currentDay)) {
-          const [startH, startM] = schedule.startTime.split(':').map(Number);
-          const [endH, endM] = schedule.endTime.split(':').map(Number);
-          const startMinutes = startH * 60 + startM;
-          const endMinutes = endH * 60 + endM;
-          
-          let inTimeRange = false;
-          if (startMinutes <= endMinutes) {
-            inTimeRange = currentMinutes >= startMinutes && currentMinutes < endMinutes;
-          } else {
-            inTimeRange = currentMinutes >= startMinutes || currentMinutes < endMinutes;
-          }
-          
-          if (inTimeRange) {
-            shouldBlock = true;
-            blockReason = `Schedule "${schedule.name}" is active (${schedule.startTime} - ${schedule.endTime})`;
-            break;
-          }
+    // Check Schedules
+    const currentDate = new Date();
+    const currentDay = currentDate.getDay();
+    const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
+    
+    let activeScheduleNames = [];
+    for (const schedule of schedules) {
+      if (!schedule.enabled) continue;
+      if (schedule.days.includes(currentDay)) {
+        const [startH, startM] = schedule.startTime.split(':').map(Number);
+        const [endH, endM] = schedule.endTime.split(':').map(Number);
+        const startMinutes = startH * 60 + startM;
+        const endMinutes = endH * 60 + endM;
+        
+        let inTimeRange = false;
+        if (startMinutes <= endMinutes) {
+          inTimeRange = currentMinutes >= startMinutes && currentMinutes < endMinutes;
+        } else {
+          inTimeRange = currentMinutes >= startMinutes || currentMinutes < endMinutes;
+        }
+        
+        if (inTimeRange) {
+          shouldBlock = true;
+          activeScheduleNames.push(schedule.name);
+          const schSites = schedule.blockedSites || [];
+          schSites.forEach(s => activeSites.add(s));
         }
       }
     }
     
-    await updateBlockingRules(sites, whitelist, shouldBlock);
+    if (activeScheduleNames.length > 0 && !blockReason) {
+      blockReason = `Schedule "${activeScheduleNames.join(', ')}" is active`;
+    } else if (activeScheduleNames.length > 0) {
+      blockReason += ` & Schedule "${activeScheduleNames.join(', ')}"`;
+    }
+    
+    const finalSitesToBlock = Array.from(activeSites);
+    
+    await updateBlockingRules(finalSitesToBlock, whitelist, shouldBlock);
     
     await api.storage.local.set({
       isCurrentlyBlocked: shouldBlock,
-      blockReason: blockReason
+      blockReason: blockReason,
+      activeBlockedSites: finalSitesToBlock
     });
     
     // Immediately sweep open tabs to enforce new block rules without requiring a reload
-    if (shouldBlock) {
-      await enforceBlockingOnOpenTabs(sites, whitelist);
+    if (shouldBlock && finalSitesToBlock.length > 0) {
+      await enforceBlockingOnOpenTabs(finalSitesToBlock, whitelist);
     }
   } catch (err) {
     console.error('Error evaluating blocking state:', err);
@@ -273,9 +284,9 @@ api.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   
   if (currentUrl.startsWith('about:') || currentUrl.startsWith('moz-extension:') || currentUrl.startsWith('chrome-extension:')) return;
   
-  const data = await api.storage.local.get(['isCurrentlyBlocked', 'blockedSites', 'whitelist']);
+  const data = await api.storage.local.get(['isCurrentlyBlocked', 'activeBlockedSites', 'whitelist']);
   if (data.isCurrentlyBlocked) {
-    const sites = data.blockedSites || [];
+    const sites = data.activeBlockedSites || [];
     const whitelist = data.whitelist || [];
     
     try {
