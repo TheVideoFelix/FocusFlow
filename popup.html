@@ -37,33 +37,27 @@
         </svg>
         <h1>Focus<span>Flow</span></h1>
       </div>
-      <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme">
-        <svg id="icon-sun" class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-        </svg>
-        <svg id="icon-moon" class="icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+      <!-- Gear Settings Toggle -->
+      <button id="btn-settings-toggle" class="btn-icon" aria-label="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+           <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+           <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       </button>
     </header>
 
-    <!-- Global Current Site Banner placed smartly at the top with margin -->
-    <div class="current-site-banner" id="current-site-banner" style="display: none;">
-      <div class="domain-info" id="current-site-domain">Loading...</div>
-      <button id="btn-block-current" class="btn btn-primary-sm">+ Block Site</button>
-    </div>
-
+    <!-- Unified Shared Status / Timer Display -->
     <section class="card status-card" id="status-card">
       <div class="status-indicator">
-        <div class="status-ring">
-          <div class="pulse-ring"></div>
-          <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <div class="status-ring" id="status-ring-container">
+          <div class="pulse-ring" id="status-pulse"></div>
+          <svg class="status-icon" id="status-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path id="status-icon-path" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
       </div>
       <div class="status-details">
-        <h2 id="status-title">Focus Block Inactive</h2>
+        <h2 id="status-title">Standby Mode</h2>
         <p id="status-text">Ready to block distractions.</p>
         <div id="live-countdown" class="countdown-display hidden">
           <span class="digits" id="timer-digits">00:00</span>
@@ -72,6 +66,7 @@
       </div>
     </section>
 
+    <!-- Navigation Tabs -->
     <nav class="tabs-nav">
       <button class="tab-btn active" data-tab="tab-timer">
         <svg xmlns="http://www.w3.org/2000/svg" class="tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Timer
@@ -88,75 +83,77 @@
     </nav>
 
     <main class="tab-content-container">
-      <!-- TAB 1: TIMER -->
+      
+      <!-- TAB 1: TIMER (Redesigned) -->
       <div id="tab-timer" class="tab-pane active">
-        <div class="timer-section">
-          <h3>Quick Focus Timer</h3>
-          <p class="section-desc">Instantly block distractions.</p>
-          
-          <div class="timer-presets" id="focus-presets">
-            <button class="preset-btn focus-preset" data-duration="15">15m</button>
-            <button class="preset-btn focus-preset" data-duration="25">25m</button>
-            <button class="preset-btn focus-preset" data-duration="45">45m</button>
-            <button class="preset-btn focus-preset" data-duration="60">1h</button>
-            <button class="preset-btn focus-preset" data-duration="120">2h</button>
-            <button class="preset-btn focus-preset" id="btn-custom-focus-trigger">Custom</button>
+        
+        <!-- Builder UI (Visible only when inactive) -->
+        <div id="timer-builder-ui">
+          <!-- Focus Section -->
+          <div class="preset-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+               <h3>Focus Session</h3>
+            </div>
+            <div class="timer-presets" id="focus-presets">
+              <button class="preset-btn focus-preset" data-duration="15">15m</button>
+              <button class="preset-btn focus-preset active" data-duration="25">25m</button>
+              <button class="preset-btn focus-preset" data-duration="45">45m</button>
+              <button class="preset-btn focus-preset" data-duration="60">1h</button>
+              <button class="preset-btn focus-preset" id="btn-custom-focus-trigger">Custom</button>
+            </div>
+            <div id="custom-focus-form" class="custom-timer-input-group hidden animate-slide-down">
+              <input type="number" id="custom-focus-minutes" min="1" max="1440" placeholder="Custom Focus Mins" />
+            </div>
+            <div class="action-row">
+              <button id="btn-start-focus" class="btn btn-primary">Start 25m Focus</button>
+            </div>
           </div>
           
-          <div id="custom-focus-form" class="custom-timer-input-group hidden animate-slide-down">
-            <input type="number" id="custom-focus-minutes" min="1" max="1440" placeholder="Minutes" />
-          </div>
+          <div style="height: 1px; background: var(--border-color); margin: 16px 0;"></div>
 
-          <div class="action-row" id="inactive-actions">
-            <button id="btn-focus-action" class="btn btn-primary">Start 25m Focus Timer</button>
+          <!-- Break Section -->
+          <div class="preset-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+               <h3>Break Time</h3>
+            </div>
+            <div class="timer-presets" id="break-presets">
+              <button class="preset-btn break-preset active" data-duration="5">5m</button>
+              <button class="preset-btn break-preset" data-duration="10">10m</button>
+              <button class="preset-btn break-preset" data-duration="15">15m</button>
+              <button class="preset-btn break-preset" data-duration="20">20m</button>
+              <button class="preset-btn break-preset" id="btn-custom-break-trigger">Custom</button>
+            </div>
+            <div id="custom-break-form" class="custom-timer-input-group hidden animate-slide-down">
+              <input type="number" id="custom-break-minutes" min="1" max="1440" placeholder="Custom Break Mins" />
+            </div>
+            <div class="action-row">
+              <button id="btn-start-break" class="btn btn-success-gradient">Start 5m Break</button>
+            </div>
           </div>
+        </div>
 
-          <div class="action-row" id="active-actions" style="display: none; gap: 8px;">
-             <!-- Beautiful gradient pause button -->
-             <button id="btn-timer-pause" class="btn btn-warning-gradient">Pause</button>
-             <button id="btn-timer-cancel" class="btn btn-danger-sm">Cancel Focus</button>
-          </div>
-
-          <!-- Restyled Break Section with Presets -->
-          <div class="break-section" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-             <h3>Take a Break</h3>
-             <p class="section-desc">Start a relaxing break timer.</p>
-             
-             <div id="break-inactive-actions">
-               <div class="timer-presets" id="break-presets">
-                 <button class="preset-btn break-preset" data-duration="5">5m</button>
-                 <button class="preset-btn break-preset" data-duration="10">10m</button>
-                 <button class="preset-btn break-preset" data-duration="15">15m</button>
-                 <button class="preset-btn break-preset" data-duration="20">20m</button>
-                 <button class="preset-btn break-preset" data-duration="30">30m</button>
-                 <button class="preset-btn break-preset" id="btn-custom-break-trigger">Custom</button>
-               </div>
-               
-               <div id="custom-break-form" class="custom-timer-input-group hidden animate-slide-down">
-                 <input type="number" id="custom-break-minutes" min="1" max="1440" placeholder="Minutes" />
-               </div>
-
-               <div class="action-row">
-                  <!-- Beautiful emerald gradient start break button -->
-                  <button id="btn-break-action" class="btn btn-success-gradient">Start 5m Break</button>
-               </div>
-             </div>
-             
-             <div class="action-row hidden" id="break-active-actions" style="display: flex; gap: 8px; align-items: center; background: rgba(16,185,129,0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(16,185,129,0.2);">
-                <span id="break-countdown" style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--success); flex-grow: 1;">00:00</span>
-                <button id="btn-cancel-break" class="btn btn-danger-sm" style="margin:0;">Stop Break</button>
-             </div>
-          </div>
+        <!-- Active Actions UI (Visible only when a timer is active) -->
+        <div id="timer-active-ui" class="hidden" style="margin-top: 10px;">
+           <div style="display: flex; gap: 8px; flex-direction: column;">
+              <!-- This button morphs based on what is active (Pause, Resume, Stop Break) -->
+              <button id="btn-active-primary" class="btn btn-warning-gradient">Pause Timer</button>
+              <button id="btn-active-cancel" class="btn btn-danger-sm">Stop & Cancel</button>
+           </div>
         </div>
       </div>
       
       <!-- TAB 2: SCHEDULES -->
       <div id="tab-schedules" class="tab-pane">
+        <!-- Add Current Site Banner inside Schedules -->
+        <div class="current-site-banner hidden" id="banner-schedules">
+           <div class="domain-info banner-domain">Loading...</div>
+           <button class="btn btn-primary-sm btn-block-current">+ Block Site</button>
+        </div>
+
         <div class="schedules-header">
           <h3>Weekly Schedules</h3>
-          <button id="btn-new-schedule" class="btn btn-secondary-sm">Add</button>
+          <button id="btn-new-schedule" class="btn btn-secondary-sm">Add New</button>
         </div>
-        <p class="section-desc">Set recurring blocks. Your current site can be added globally above.</p>
         <div id="schedule-form-card" class="card form-card hidden animate-slide-down">
           <h4 id="schedule-form-title">Create Schedule</h4>
           <div class="form-group"><label>Name</label><input type="text" id="schedule-name" placeholder="e.g. Uni Studies" /></div>
@@ -186,9 +183,15 @@
       
       <!-- TAB 3: BLOCK LIST -->
       <div id="tab-sites" class="tab-pane">
+        <!-- Add Current Site Banner inside Blocklist -->
+        <div class="current-site-banner hidden" id="banner-sites">
+           <div class="domain-info banner-domain">Loading...</div>
+           <button class="btn btn-primary-sm btn-block-current">+ Block Site</button>
+        </div>
+
         <div class="sites-section">
           <h3>Manage Blocked Sites</h3>
-          <p class="section-desc">Add domains manually.</p>
+          <p class="section-desc">Add domains manually below.</p>
           <form id="add-site-form" class="add-site-group">
             <input type="text" id="site-domain" placeholder="e.g. youtube.com" required />
             <button type="submit" class="btn btn-secondary-sm">Add</button>
@@ -201,8 +204,7 @@
       <div id="tab-history" class="tab-pane">
          <div class="history-section">
             <div class="stats-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-               <h3>Focus History</h3>
-               <button id="btn-clear-history" class="btn btn-danger-sm">Clear All</button>
+               <h3>Focus Stats</h3>
             </div>
             <div class="total-focus-card card" style="text-align: center; margin-bottom: 16px; padding: 12px;">
                <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Focus Time</div>
@@ -211,6 +213,29 @@
             <div id="history-list" class="schedules-list-container"></div>
          </div>
       </div>
+
+      <!-- TAB 5: SETTINGS -->
+      <div id="tab-settings" class="tab-pane">
+         <div class="settings-section">
+            <h3 style="margin-bottom: 16px;">Settings</h3>
+            
+            <div class="form-group card" style="margin-bottom: 16px;">
+               <label style="margin-bottom: 8px;">Theme Preference</label>
+               <select id="theme-select" style="width: 100%; padding: 8px; border-radius: 8px; background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color);">
+                  <option value="system">System Default</option>
+                  <option value="dark">Dark Mode</option>
+                  <option value="light">Light Mode</option>
+               </select>
+            </div>
+
+            <div class="form-group card" style="border-color: rgba(244, 63, 94, 0.3);">
+               <label style="margin-bottom: 8px; color: var(--danger);">Data Management</label>
+               <p class="section-desc" style="margin-bottom: 10px;">Clear all your focus history and stats. This cannot be undone.</p>
+               <button id="btn-settings-clear-history" class="btn btn-danger-sm" style="width: 100%;">Clear Focus History</button>
+            </div>
+         </div>
+      </div>
+
     </main>
   </div>
 
@@ -218,7 +243,7 @@
      <div class="modal-card">
         <h3 id="modal-title">Delete History?</h3>
         <p id="modal-text">Are you sure you want to delete all your focus stats? This cannot be undone.</p>
-        <div class="form-actions">
+        <div class="form-actions" style="justify-content: center; gap: 12px;">
            <button id="btn-modal-cancel" class="btn btn-text">Cancel</button>
            <button id="btn-modal-confirm" class="btn btn-danger-sm">Yes, Delete</button>
         </div>

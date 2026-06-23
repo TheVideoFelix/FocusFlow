@@ -2,7 +2,6 @@
 const api = typeof browser !== 'undefined' ? browser : chrome;
 
 let countdownInterval = null;
-let breakInterval = null;
 let selectedTimerMinutes = 25;
 let selectedBreakMinutes = 5;
 
@@ -12,9 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadStatus();
   await renderSchedules();
   await renderSites();
-  await initCurrentSiteBanner();
+  await initCurrentSiteBanners();
   await renderHistory();
   initTabs();
+  initSettings();
   initTimerPanel();
   initScheduleForm();
   initBlocklistForm();
@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   api.storage.onChanged.addListener(async (changes, namespace) => {
     if (namespace !== 'local') return;
-    
     if (changes.isCurrentlyBlocked || changes.timerActive || changes.timerEnd || changes.isPaused || changes.breakActive || changes.breakEnd) {
       await loadStatus();
       await renderSites();
@@ -31,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (changes.schedules) await renderSchedules();
     if (changes.blockedSites) await renderSites();
     if (changes.sessionHistory) await renderHistory();
-    if (changes.theme) applyTheme(changes.theme.newValue);
+    if (changes.theme) await applyThemePref(changes.theme.newValue);
   });
 });
 
@@ -40,24 +39,33 @@ document.addEventListener('DOMContentLoaded', async () => {
    ========================================== */
 async function initTheme() {
   const data = await api.storage.local.get('theme');
-  applyTheme(data.theme || 'dark');
-  document.getElementById('theme-toggle').addEventListener('click', async () => {
-    const newTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
-    await api.storage.local.set({ theme: newTheme });
+  await applyThemePref(data.theme || 'system');
+  
+  // Listen for OS theme changes if in system mode
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+    const d = await api.storage.local.get('theme');
+    if (!d.theme || d.theme === 'system') applyThemePref('system');
   });
 }
 
-function applyTheme(theme) {
-  const sunIcon = document.getElementById('icon-sun');
-  const moonIcon = document.getElementById('icon-moon');
-  if (theme === 'light') {
-    document.body.classList.replace('dark-mode', 'light-mode') || document.body.classList.add('light-mode');
-    sunIcon.classList.add('hidden');
-    moonIcon.classList.remove('hidden');
+async function applyThemePref(themePref) {
+  const select = document.getElementById('theme-select');
+  if (select) select.value = themePref;
+  
+  let isDark = true;
+  if (themePref === 'light') {
+    isDark = false;
+  } else if (themePref === 'dark') {
+    isDark = true;
   } else {
+    // System
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  
+  if (isDark) {
     document.body.classList.replace('light-mode', 'dark-mode') || document.body.classList.add('dark-mode');
-    moonIcon.classList.add('hidden');
-    sunIcon.classList.remove('hidden');
+  } else {
+    document.body.classList.replace('dark-mode', 'light-mode') || document.body.classList.add('light-mode');
   }
 }
 
@@ -80,24 +88,43 @@ async function checkPermissions() {
 }
 
 /* ==========================================
-   NAVIGATION
+   NAVIGATION & SETTINGS
    ========================================== */
 function initTabs() {
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabPanes = document.querySelectorAll('.tab-pane');
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-      tabPanes.forEach(pane => {
-        pane.classList.toggle('active', pane.id === button.getAttribute('data-tab'));
-      });
+  
+  function switchTab(tabId) {
+    tabButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
     });
+    tabPanes.forEach(pane => {
+      pane.classList.toggle('active', pane.id === tabId);
+    });
+  }
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => switchTab(button.getAttribute('data-tab')));
+  });
+
+  document.getElementById('btn-settings-toggle').addEventListener('click', () => {
+    switchTab('tab-settings');
+  });
+}
+
+function initSettings() {
+  const select = document.getElementById('theme-select');
+  select.addEventListener('change', async (e) => {
+    await api.storage.local.set({ theme: e.target.value });
+  });
+
+  document.getElementById('btn-settings-clear-history').addEventListener('click', () => {
+    document.getElementById('confirm-modal').classList.remove('hidden');
   });
 }
 
 /* ==========================================
-   STATUS, TIMER, PAUSE, BREAK
+   STATUS & UNIFIED TIMER LOGIC
    ========================================== */
 async function loadStatus() {
   const data = await api.storage.local.get([
@@ -110,53 +137,70 @@ async function loadStatus() {
   const iconPath = document.getElementById('status-icon-path');
   const countdownContainer = document.getElementById('live-countdown');
   
-  const activeActions = document.getElementById('active-actions');
-  const inactiveActions = document.getElementById('inactive-actions');
-  const btnPause = document.getElementById('btn-timer-pause');
-  
-  const breakInactive = document.getElementById('break-inactive-actions');
-  const breakActive = document.getElementById('break-active-actions');
-  const breakSection = document.querySelector('.break-section');
+  const builderUI = document.getElementById('timer-builder-ui');
+  const activeUI = document.getElementById('timer-active-ui');
+  const btnPrimary = document.getElementById('btn-active-primary');
+  const btnCancel = document.getElementById('btn-active-cancel');
+  const pulseRing = document.getElementById('status-pulse');
+  const ringContainer = document.getElementById('status-ring-container');
 
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-  if (breakInterval) { clearInterval(breakInterval); breakInterval = null; }
+  
+  // Reset custom ring styling
+  ringContainer.style.background = '';
+  pulseRing.style.borderColor = '';
 
-  // Break Timer Logic
-  if (data.breakActive && data.breakEnd > Date.now()) {
-    breakSection.classList.remove('hidden');
-    breakInactive.classList.add('hidden');
-    breakActive.classList.remove('hidden');
-    startBreakCountdown(data.breakEnd);
-  } else {
-    breakInactive.classList.remove('hidden');
-    breakActive.classList.add('hidden');
-  }
-
-  // Focus Timer / Pause Logic
   if (data.timerActive) {
-    activeActions.style.display = 'flex';
-    inactiveActions.style.display = 'none';
+    // FOCUS IS ACTIVE
+    builderUI.classList.add('hidden');
+    activeUI.classList.remove('hidden');
     countdownContainer.classList.remove('hidden');
+    
+    btnPrimary.style.display = 'block';
     
     if (data.isPaused) {
       statusCard.classList.remove('active');
       statusTitle.textContent = 'Focus Paused';
-      statusText.textContent = 'Timer is paused. Distractions are temporarily accessible.';
-      btnPause.textContent = 'Resume';
-      btnPause.className = 'btn btn-primary'; // Standard primary for Resume
+      statusText.textContent = 'Timer paused. Distractions accessible.';
+      btnPrimary.textContent = 'Resume Focus';
+      btnPrimary.className = 'btn btn-primary'; // Uses normal Focus styling
+      btnCancel.textContent = 'Cancel Focus';
       renderStaticTime(data.remainingTimeMs);
     } else {
       statusCard.classList.add('active');
       statusTitle.textContent = 'Focus Mode Active';
-      statusText.textContent = data.blockReason || 'Timer active';
-      btnPause.textContent = 'Pause';
-      btnPause.className = 'btn btn-warning-gradient'; // Warning gradient for Pause
+      statusText.textContent = data.blockReason || 'Timer running.';
+      btnPrimary.textContent = 'Pause Focus';
+      btnPrimary.className = 'btn btn-warning-gradient'; // Specific gradient for Active Pause state
+      btnCancel.textContent = 'Cancel Focus';
       startLiveCountdown(data.timerEnd);
     }
     iconPath.setAttribute('d', 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z');
+    
+  } else if (data.breakActive) {
+    // BREAK IS ACTIVE
+    builderUI.classList.add('hidden');
+    activeUI.classList.remove('hidden');
+    countdownContainer.classList.remove('hidden');
+    
+    statusCard.classList.add('active');
+    statusTitle.textContent = 'Break Time!';
+    statusText.textContent = 'Relax. Blocked sites are accessible.';
+    
+    // Style ring green for break
+    ringContainer.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    pulseRing.style.borderColor = '#10b981';
+    
+    btnPrimary.style.display = 'none'; // No pause for breaks
+    btnCancel.textContent = 'Stop Break';
+    
+    startLiveCountdown(data.breakEnd);
+    iconPath.setAttribute('d', 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z');
+    
   } else {
-    activeActions.style.display = 'none';
-    inactiveActions.style.display = 'flex';
+    // STANDBY OR SCHEDULED
+    builderUI.classList.remove('hidden');
+    activeUI.classList.add('hidden');
     
     if (data.isCurrentlyBlocked) {
       statusCard.classList.add('active');
@@ -185,17 +229,6 @@ function startLiveCountdown(endTime) {
   countdownInterval = setInterval(update, 1000);
 }
 
-function startBreakCountdown(endTime) {
-  const digitsEl = document.getElementById('break-countdown');
-  function update() {
-    const diff = endTime - Date.now();
-    if (diff <= 0) { clearInterval(breakInterval); loadStatus(); return; }
-    renderStaticTime(diff, digitsEl);
-  }
-  update();
-  breakInterval = setInterval(update, 1000);
-}
-
 function renderStaticTime(ms, element = document.getElementById('timer-digits')) {
   const hours = Math.floor(ms / 3600000);
   const minutes = Math.floor((ms % 3600000) / 60000);
@@ -217,7 +250,7 @@ function initTimerPanel() {
       } else {
         btn.classList.add('active');
         selectedTimerMinutes = parseInt(btn.getAttribute('data-duration'), 10);
-        document.getElementById('btn-focus-action').textContent = `Start ${selectedTimerMinutes}m Focus Timer`;
+        document.getElementById('btn-start-focus').textContent = `Start ${selectedTimerMinutes}m Focus`;
       }
     });
   });
@@ -225,7 +258,6 @@ function initTimerPanel() {
   // Break Presets
   const breakPresets = document.querySelectorAll('.break-preset');
   breakPresets.forEach(btn => {
-    if (btn.getAttribute('data-duration') === '5') btn.classList.add('active');
     btn.addEventListener('click', () => {
       breakPresets.forEach(b => b.classList.remove('active'));
       document.getElementById('custom-break-form').classList.add('hidden');
@@ -235,72 +267,63 @@ function initTimerPanel() {
       } else {
         btn.classList.add('active');
         selectedBreakMinutes = parseInt(btn.getAttribute('data-duration'), 10);
-        document.getElementById('btn-break-action').textContent = `Start ${selectedBreakMinutes}m Break`;
+        document.getElementById('btn-start-break').textContent = `Start ${selectedBreakMinutes}m Break`;
       }
     });
   });
 
-  // Focus Start
-  document.getElementById('btn-focus-action').addEventListener('click', () => {
+  // Start Buttons
+  document.getElementById('btn-start-focus').addEventListener('click', async () => {
     let mins = selectedTimerMinutes;
     if (!document.getElementById('custom-focus-form').classList.contains('hidden')) {
       const val = parseInt(document.getElementById('custom-focus-minutes').value, 10);
       if (!val || val <= 0 || val > 1440) return alert('Enter a valid duration (1-1440 min).');
       mins = val;
     }
-    startTimer(mins);
+    await api.storage.local.set({
+      timerActive: true, timerEnd: Date.now() + mins * 60000,
+      isPaused: false, breakActive: false, lastTimerDuration: mins
+    });
   });
 
-  // Break Start
-  document.getElementById('btn-break-action').addEventListener('click', () => {
+  document.getElementById('btn-start-break').addEventListener('click', async () => {
     let mins = selectedBreakMinutes;
     if (!document.getElementById('custom-break-form').classList.contains('hidden')) {
       const val = parseInt(document.getElementById('custom-break-minutes').value, 10);
       if (!val || val <= 0 || val > 1440) return alert('Enter a valid duration (1-1440 min).');
       mins = val;
     }
-    startBreak(mins);
+    await api.storage.local.set({
+      breakActive: true, breakEnd: Date.now() + mins * 60000,
+      timerActive: false, isPaused: false
+    });
   });
 
-  // Pause
-  document.getElementById('btn-timer-pause').addEventListener('click', async () => {
+  // Active Actions
+  document.getElementById('btn-active-primary').addEventListener('click', async () => {
     const data = await api.storage.local.get(['timerActive', 'isPaused', 'timerEnd', 'remainingTimeMs']);
-    if (!data.timerActive) return;
-    if (data.isPaused) {
-      await api.storage.local.set({ isPaused: false, timerEnd: Date.now() + data.remainingTimeMs });
-    } else {
-      await api.storage.local.set({ isPaused: true, remainingTimeMs: data.timerEnd - Date.now() });
+    if (data.timerActive) {
+      if (data.isPaused) {
+        await api.storage.local.set({ isPaused: false, timerEnd: Date.now() + data.remainingTimeMs });
+      } else {
+        await api.storage.local.set({ isPaused: true, remainingTimeMs: data.timerEnd - Date.now() });
+      }
     }
   });
 
-  // Cancel Focus / Break
-  document.getElementById('btn-timer-cancel').addEventListener('click', async () => {
-    await api.storage.local.set({ timerActive: false, timerEnd: 0, isPaused: false, lastTimerDuration: 0 });
+  document.getElementById('btn-active-cancel').addEventListener('click', async () => {
+    await api.storage.local.set({ timerActive: false, timerEnd: 0, isPaused: false, lastTimerDuration: 0, breakActive: false, breakEnd: 0 });
   });
-  
-  document.getElementById('btn-cancel-break').addEventListener('click', async () => {
-    await api.storage.local.set({ breakActive: false, breakEnd: 0 });
-  });
-}
-
-async function startTimer(minutes) {
-  await api.storage.local.set({
-    timerActive: true, timerEnd: Date.now() + minutes * 60000,
-    isPaused: false, breakActive: false, lastTimerDuration: minutes
-  });
-}
-
-async function startBreak(minutes) {
-  await api.storage.local.set({ breakActive: true, breakEnd: Date.now() + minutes * 60000 });
 }
 
 /* ==========================================
    BLOCKLIST & SMART ADD SITE
    ========================================== */
-async function initCurrentSiteBanner() {
-  const banner = document.getElementById('current-site-banner');
-  const domainText = document.getElementById('current-site-domain');
-  const blockBtn = document.getElementById('btn-block-current');
+async function initCurrentSiteBanners() {
+  const banners = [
+    { el: document.getElementById('banner-schedules') },
+    { el: document.getElementById('banner-sites') }
+  ];
   
   try {
     const tabs = await api.tabs.query({ active: true, currentWindow: true });
@@ -309,21 +332,29 @@ async function initCurrentSiteBanner() {
     if (!['http:', 'https:'].includes(url.protocol)) return;
     
     let domain = url.hostname.replace(/^www\./, '');
-    domainText.textContent = domain;
-    banner.style.display = 'flex'; // Globally show it below header!
     
-    blockBtn.onclick = async () => {
-      const data = await api.storage.local.get('blockedSites');
-      const sites = data.blockedSites || [];
-      if (!sites.includes(domain)) {
-        sites.push(domain);
-        await api.storage.local.set({ blockedSites: sites });
-        blockBtn.textContent = 'Added!';
-        blockBtn.disabled = true;
-      }
-    };
+    banners.forEach(b => {
+      b.el.querySelector('.banner-domain').textContent = domain;
+      b.el.classList.remove('hidden');
+      
+      const btn = b.el.querySelector('.btn-block-current');
+      btn.onclick = async () => {
+        const data = await api.storage.local.get('blockedSites');
+        const sites = data.blockedSites || [];
+        if (!sites.includes(domain)) {
+          sites.push(domain);
+          await api.storage.local.set({ blockedSites: sites });
+          
+          // Update all banner buttons
+          document.querySelectorAll('.btn-block-current').forEach(b => {
+            b.textContent = 'Added!';
+            b.disabled = true;
+          });
+        }
+      };
+    });
   } catch (e) {
-    banner.style.display = 'none';
+    // Hide all
   }
 }
 
@@ -349,8 +380,7 @@ async function renderSites() {
   const sites = data.blockedSites || [];
   const container = document.getElementById('sites-chips');
   
-  const curSiteBtn = document.getElementById('btn-block-current');
-  if(curSiteBtn) curSiteBtn.disabled = data.isCurrentlyBlocked;
+  document.querySelectorAll('.btn-block-current').forEach(btn => btn.disabled = data.isCurrentlyBlocked);
   document.querySelector('#add-site-form button').disabled = data.isCurrentlyBlocked;
 
   container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
@@ -450,7 +480,6 @@ async function renderSchedules() {
    ========================================== */
 function initHistoryModal() {
   const modal = document.getElementById('confirm-modal');
-  document.getElementById('btn-clear-history').addEventListener('click', () => modal.classList.remove('hidden'));
   document.getElementById('btn-modal-cancel').addEventListener('click', () => modal.classList.add('hidden'));
   document.getElementById('btn-modal-confirm').addEventListener('click', async () => {
     await api.storage.local.set({ sessionHistory: [] });
