@@ -570,8 +570,9 @@ body {
 /* FORM ELEMENTS */
 input[type="text"],
 input[type="number"],
-input[type="time"] {
-  background: var(--bg-input);
+input[type="time"],
+select {
+  background: transparent;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px 12px;
