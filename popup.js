@@ -416,8 +416,8 @@ async function renderSites() {
   const container = document.getElementById('sites-chips');
   const wContainer = document.getElementById('whitelist-chips');
   
-  document.querySelectorAll('.btn-block-current').forEach(btn => btn.disabled = data.isCurrentlyBlocked);
-  document.querySelector('#add-site-form button').disabled = data.isCurrentlyBlocked;
+  document.querySelectorAll('.btn-block-current').forEach(btn => btn.disabled = false);
+  document.querySelector('#add-site-form button').disabled = false;
   document.querySelector('#add-whitelist-form button').disabled = data.isCurrentlyBlocked;
 
   container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
@@ -511,7 +511,7 @@ async function renderSchedules() {
   const container = document.getElementById('schedules-list');
   const schedules = data.schedules || [];
   
-  document.getElementById('btn-new-schedule').disabled = data.isCurrentlyBlocked;
+  document.getElementById('btn-new-schedule').disabled = false;
   
   if (schedules.length === 0) { container.innerHTML = '<div class="empty-state"><p>No schedules configured.</p></div>'; return; }
   container.innerHTML = '';
