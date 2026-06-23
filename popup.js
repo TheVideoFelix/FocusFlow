@@ -779,9 +779,10 @@ async function renderHistory() {
 
   reversedHistory.slice(0, currentHistoryLimit).forEach(session => {
     const item = document.createElement('div');
-    item.className = 'history-item card';
-    item.style.padding = '12px';
+    item.className = 'history-item';
+    item.style.padding = '12px 0';
     item.style.marginBottom = '0';
+    item.style.borderBottom = '1px solid var(--border-color)';
     const d = new Date(session.date);
     let typeColor = 'var(--accent-light)';
     let dotColor = 'var(--accent)';
