@@ -410,7 +410,7 @@ function initSiteForms() {
 }
 
 async function renderSites() {
-  const data = await api.storage.local.get(['blockedSites', 'whitelist', 'isCurrentlyBlocked']);
+  const data = await api.storage.local.get(['blockedSites', 'whitelist', 'isCurrentlyBlocked', 'timerActive']);
   const sites = data.blockedSites || [];
   const whitelist = data.whitelist || [];
   const container = document.getElementById('sites-chips');
@@ -418,14 +418,14 @@ async function renderSites() {
   
   document.querySelectorAll('.btn-block-current').forEach(btn => btn.disabled = false);
   document.querySelector('#add-site-form button').disabled = false;
-  document.querySelector('#add-whitelist-form button').disabled = data.isCurrentlyBlocked;
+  document.querySelector('#add-whitelist-form button').disabled = data.timerActive;
 
   container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
   sites.forEach(site => {
     const chip = document.createElement('div');
-    chip.className = `site-chip ${data.isCurrentlyBlocked ? 'disabled' : ''}`;
+    chip.className = `site-chip ${data.timerActive ? 'disabled' : ''}`;
     chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
-    if (!data.isCurrentlyBlocked) {
+    if (!data.timerActive) {
       chip.querySelector('.btn-remove-site').onclick = async () => {
         const d = await api.storage.local.get('blockedSites');
         await api.storage.local.set({ blockedSites: (d.blockedSites || []).filter(s => s !== site) });
@@ -437,11 +437,11 @@ async function renderSites() {
   wContainer.innerHTML = whitelist.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No exceptions.</p>';
   whitelist.forEach(site => {
     const chip = document.createElement('div');
-    chip.className = `site-chip ${data.isCurrentlyBlocked ? 'disabled' : ''}`;
+    chip.className = `site-chip ${data.timerActive ? 'disabled' : ''}`;
     chip.style.borderColor = 'var(--success)';
     chip.style.color = 'var(--success)';
     chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
-    if (!data.isCurrentlyBlocked) {
+    if (!data.timerActive) {
       chip.querySelector('.btn-remove-site').onclick = async () => {
         const d = await api.storage.local.get('whitelist');
         await api.storage.local.set({ whitelist: (d.whitelist || []).filter(s => s !== site) });

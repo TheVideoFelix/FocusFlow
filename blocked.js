@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // React to storage updates (e.g. if the user cancels the timer in the popup, or a schedule changes)
   api.storage.onChanged.addListener(async (changes, namespace) => {
     if (namespace !== 'local') return;
-    if (changes.isCurrentlyBlocked || changes.timerActive || changes.timerEnd) {
+    if (changes.isCurrentlyBlocked || changes.timerActive || changes.timerEnd || changes.activeBlockedSites || changes.whitelist) {
       await loadBlockDetails();
     }
   });
@@ -87,13 +87,38 @@ async function loadBlockDetails() {
     'isCurrentlyBlocked',
     'blockReason',
     'timerActive',
-    'timerEnd'
+    'timerEnd',
+    'activeBlockedSites',
+    'whitelist'
   ]);
 
-  const isBlocked = data.isCurrentlyBlocked || false;
+  let isBlocked = data.isCurrentlyBlocked || false;
   const reason = data.blockReason || '';
   const timerActive = data.timerActive || false;
   const timerEnd = data.timerEnd || 0;
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetUrl = urlParams.get('url');
+  const targetDomain = urlParams.get('d');
+  
+  if (isBlocked && (targetUrl || targetDomain)) {
+    let host = '';
+    try {
+      if (targetUrl) host = new URL(targetUrl).hostname.toLowerCase();
+      else if (targetDomain) host = targetDomain.toLowerCase();
+    } catch(e) {}
+    
+    if (host) {
+      const whitelist = data.whitelist || [];
+      const sites = data.activeBlockedSites || [];
+      const isWhitelisted = whitelist.some(w => host === w || host.endsWith('.' + w));
+      const isSiteBlocked = sites.some(s => host === s || host.endsWith('.' + s));
+      
+      if (isWhitelisted || !isSiteBlocked) {
+        isBlocked = false;
+      }
+    }
+  }
 
   const timerWrapper = document.getElementById('countdown-wrapper');
   const scheduleWrapper = document.getElementById('schedule-wrapper');
@@ -106,9 +131,15 @@ async function loadBlockDetails() {
     countdownInterval = null;
   }
 
-  // If the block is lifted (e.g. timer expired or schedule ended)
+  // If the block is lifted (e.g. timer expired or schedule ended, or site no longer blocked)
   if (!isBlocked) {
-    showFocusCompleteState();
+    if (targetUrl) {
+      window.location.replace(targetUrl);
+    } else if (targetDomain) {
+      window.location.replace('https://' + targetDomain);
+    } else {
+      showFocusCompleteState();
+    }
     return;
   }
 
