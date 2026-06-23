@@ -171,7 +171,7 @@ async function loadStatus() {
       statusTitle.textContent = 'Focus Mode Active';
       statusText.textContent = data.blockReason || 'Timer running.';
       btnPrimary.textContent = 'Pause Focus';
-      btnPrimary.className = 'btn btn-warning-gradient'; // Specific gradient for Active Pause state
+      btnPrimary.className = 'btn btn-primary btn-warning-gradient'; // Specific gradient for Active Pause state
       btnCancel.textContent = 'Cancel Focus';
       startLiveCountdown(data.timerEnd);
     }
