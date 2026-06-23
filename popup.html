@@ -184,11 +184,13 @@
       <!-- TAB 3: BLOCK LIST -->
       <div id="tab-sites" class="tab-pane">
         <div class="sites-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <h3 style="margin: 0;">Manage Blocklist</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <h3 style="margin: 0; margin-bottom: 4px;">Manage Blocklist</h3>
+              <p class="section-desc" style="margin: 0;">Add domains manually below.</p>
+            </div>
             <button class="btn btn-primary-sm btn-block-current hidden" id="banner-sites-btn">+ Block Site</button>
           </div>
-          <p class="section-desc">Add domains manually below.</p>
           <form id="add-site-form" class="add-site-group">
             <input type="text" id="site-domain" placeholder="e.g. youtube.com" required />
             <button type="submit" class="btn btn-secondary-sm">Add</button>
