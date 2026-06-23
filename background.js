@@ -199,7 +199,7 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
         priority: 1,
         action: { 
           type: 'redirect', 
-          redirect: { extensionPath: '/blocked.html' } 
+          redirect: { url: api.runtime.getURL('/blocked.html') } 
         },
         condition: { 
           urlFilter: `||${domain}`, 
