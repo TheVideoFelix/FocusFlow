@@ -320,10 +320,8 @@ function initTimerPanel() {
    BLOCKLIST & SMART ADD SITE
    ========================================== */
 async function initCurrentSiteBanners() {
-  const banners = [
-    { el: document.getElementById('banner-schedules') },
-    { el: document.getElementById('banner-sites') }
-  ];
+  const btnSites = document.getElementById('banner-sites-btn');
+  const btnSchedules = document.getElementById('banner-schedules-btn');
   
   try {
     const tabs = await api.tabs.query({ active: true, currentWindow: true });
@@ -333,11 +331,11 @@ async function initCurrentSiteBanners() {
     
     let domain = url.hostname.replace(/^www\./, '');
     
-    banners.forEach(b => {
-      b.el.querySelector('.banner-domain').textContent = domain;
-      b.el.classList.remove('hidden');
+    [btnSites, btnSchedules].forEach(btn => {
+      if (!btn) return;
+      btn.textContent = `+ Block ${domain}`;
+      btn.classList.remove('hidden');
       
-      const btn = b.el.querySelector('.btn-block-current');
       btn.onclick = async () => {
         const data = await api.storage.local.get('blockedSites');
         const sites = data.blockedSites || [];
@@ -345,7 +343,6 @@ async function initCurrentSiteBanners() {
           sites.push(domain);
           await api.storage.local.set({ blockedSites: sites });
           
-          // Update all banner buttons
           document.querySelectorAll('.btn-block-current').forEach(b => {
             b.textContent = 'Added!';
             b.disabled = true;
@@ -353,9 +350,7 @@ async function initCurrentSiteBanners() {
         }
       };
     });
-  } catch (e) {
-    // Hide all
-  }
+  } catch (e) {}
 }
 
 function initBlocklistForm() {
