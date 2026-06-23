@@ -162,6 +162,11 @@ async function loadStatus() {
       statusCard.classList.remove('active');
       statusTitle.textContent = 'Focus Paused';
       statusText.textContent = 'Timer paused. Distractions accessible.';
+      
+      // Match the pause button's cyan gradient
+      ringContainer.style.background = 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)';
+      pulseRing.style.borderColor = '#06b6d4';
+      
       btnPrimary.textContent = 'Resume Focus';
       btnPrimary.className = 'btn btn-primary'; // Uses normal Focus styling
       btnCancel.textContent = 'Cancel Focus';
@@ -448,19 +453,22 @@ async function renderSchedules() {
       </div>
       <div class="schedule-item-actions">
         <label class="switch">
-          <input type="checkbox" class="schedule-toggle" ${schedule.enabled ? 'checked' : ''} ${data.isCurrentlyBlocked ? 'disabled' : ''}/>
+          <input type="checkbox" class="schedule-toggle" ${schedule.enabled ? 'checked' : ''} />
           <span class="slider"></span>
         </label>
         <button class="btn-delete-schedule" ${data.isCurrentlyBlocked ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
       </div>
     `;
+    
+    // Always allow toggling schedules even if blocked
+    item.querySelector('.schedule-toggle').addEventListener('change', async (e) => {
+      const d = await api.storage.local.get('schedules');
+      const list = d.schedules || [];
+      const s = list.find(x => x.id === schedule.id);
+      if (s) { s.enabled = e.target.checked; await api.storage.local.set({ schedules: list }); }
+    });
+    
     if (!data.isCurrentlyBlocked) {
-      item.querySelector('.schedule-toggle').addEventListener('change', async (e) => {
-        const d = await api.storage.local.get('schedules');
-        const list = d.schedules || [];
-        const s = list.find(x => x.id === schedule.id);
-        if (s) { s.enabled = e.target.checked; await api.storage.local.set({ schedules: list }); }
-      });
       item.querySelector('.btn-delete-schedule').addEventListener('click', async () => {
         const d = await api.storage.local.get('schedules');
         await api.storage.local.set({ schedules: (d.schedules || []).filter(x => x.id !== schedule.id) });

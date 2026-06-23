@@ -181,8 +181,14 @@ async function updateBlockingRules(domains, blockActive) {
       rulesToAdd.push({
         id: index + 1,
         priority: 1,
-        action: { type: 'redirect', redirect: { extensionPath: '/blocked.html' } },
-        condition: { urlFilter: `||${domain.trim()}^`, resourceTypes: ['main_frame'] }
+        action: { 
+          type: 'redirect', 
+          redirect: { regexSubstitution: api.runtime.getURL('/blocked.html') + '?url=\\0' } 
+        },
+        condition: { 
+          regexFilter: `^https?://([^/]+\\.)?${domain.replace(/\\./g, '\\\\.')}(/.*)?$`, 
+          resourceTypes: ['main_frame'] 
+        }
       });
     });
   }

@@ -203,13 +203,20 @@ function setupActionButtons() {
   const backBtn = document.getElementById('btn-back');
   const newTabBtn = document.getElementById('btn-new-tab');
   
-  backBtn.addEventListener('click', () => {
-    // If block is lifted, reload or go back to load site
-    // Otherwise go back in history to escape blocked site
-    if (history.length > 1) {
+  backBtn.addEventListener('click', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUrl = urlParams.get('url');
+
+    const data = await api.storage.local.get('isCurrentlyBlocked');
+    
+    // If block is lifted and we know the target, go directly there!
+    if (!data.isCurrentlyBlocked && targetUrl) {
+      window.location.replace(targetUrl);
+    } 
+    // Otherwise normal fallback
+    else if (history.length > 1) {
       history.back();
     } else {
-      // Fallback if no history (e.g. opened in new tab directly)
       closeTabOrRedirect();
     }
   });
