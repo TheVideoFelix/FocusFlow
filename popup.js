@@ -286,7 +286,7 @@ function initTimerPanel() {
       mins = val;
     }
     await api.storage.local.set({
-      timerActive: true, timerEnd: Date.now() + mins * 60000,
+      timerActive: true, timerEnd: Date.now() + mins * 60000, timerStart: Date.now(),
       isPaused: false, breakActive: false, lastTimerDuration: mins
     });
   });
@@ -299,8 +299,8 @@ function initTimerPanel() {
       mins = val;
     }
     await api.storage.local.set({
-      breakActive: true, breakEnd: Date.now() + mins * 60000,
-      timerActive: false, isPaused: false
+      breakActive: true, breakEnd: Date.now() + mins * 60000, breakStart: Date.now(),
+      timerActive: false, isPaused: false, lastBreakDuration: mins
     });
   });
 
@@ -317,7 +317,21 @@ function initTimerPanel() {
   });
 
   document.getElementById('btn-active-cancel').addEventListener('click', async () => {
-    await api.storage.local.set({ timerActive: false, timerEnd: 0, isPaused: false, lastTimerDuration: 0, breakActive: false, breakEnd: 0 });
+    const data = await api.storage.local.get(['timerActive', 'breakActive', 'timerStart', 'breakStart', 'sessionHistory']);
+    const history = data.sessionHistory || [];
+    
+    if (data.timerActive) {
+      const elapsedMs = Date.now() - (data.timerStart || Date.now());
+      history.push({ id: Date.now(), date: new Date().toISOString(), durationMs: elapsedMs, type: 'Aborted Focus' });
+    } else if (data.breakActive) {
+      const elapsedMs = Date.now() - (data.breakStart || Date.now());
+      history.push({ id: Date.now(), date: new Date().toISOString(), durationMs: elapsedMs, type: 'Break Timer' });
+    }
+    
+    await api.storage.local.set({ 
+      timerActive: false, timerEnd: 0, timerStart: 0, isPaused: false, lastTimerDuration: 0, 
+      breakActive: false, breakEnd: 0, breakStart: 0, lastBreakDuration: 0, sessionHistory: history 
+    });
   });
 }
 
@@ -533,6 +547,8 @@ function initHistoryModal() {
   });
 }
 
+let statsChartInstance = null;
+
 async function renderHistory() {
   const data = await api.storage.local.get('sessionHistory');
   const history = data.sessionHistory || [];
@@ -542,28 +558,106 @@ async function renderHistory() {
   if (history.length === 0) {
     totalEl.textContent = '0h 0m';
     container.innerHTML = '<div class="empty-state"><p>No focus history yet. Start a timer!</p></div>';
+    if (statsChartInstance) statsChartInstance.destroy();
     return;
   }
   
-  let totalMs = history.reduce((sum, item) => sum + item.durationMs, 0);
-  const totalH = Math.floor(totalMs / 3600000);
-  const totalM = Math.floor((totalMs % 3600000) / 60000);
-  totalEl.textContent = `${totalH}h ${totalM}m`;
-  
+  let totalMs = 0;
   container.innerHTML = '';
-  [...history].reverse().forEach(item => {
-    const el = document.createElement('div');
-    el.className = 'history-item';
-    const date = new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const durM = Math.round(item.durationMs / 60000);
-    el.innerHTML = `
-      <div class="history-info">
-        <span class="history-type">${item.type}</span>
-        <span class="history-date">${date}</span>
+  
+  const dailyStats = {};
+  
+  history.slice().reverse().forEach(session => {
+    if (session.type === 'Focus Timer') totalMs += session.durationMs || 0;
+    
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const d = new Date(session.date);
+    let typeColor = 'var(--accent-light)';
+    let dotColor = 'var(--accent)';
+    
+    if (session.type === 'Aborted Focus') {
+      typeColor = 'var(--danger)';
+      dotColor = 'var(--danger)';
+    } else if (session.type === 'Break Timer') {
+      typeColor = 'var(--success)';
+      dotColor = 'var(--success)';
+    }
+    
+    item.innerHTML = `
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+         <div style="display:flex; flex-direction:column;">
+            <div style="font-weight: 600; font-size: 13px; display:flex; align-items:center; gap: 6px;">
+               <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${dotColor};"></span>
+               ${session.type || 'Focus'}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted);">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</div>
+         </div>
+         <div style="font-weight: 700; color: ${typeColor};">${Math.round(session.durationMs / 60000)}m</div>
       </div>
-      <div class="history-duration">+${durM}m</div>
     `;
-    container.appendChild(el);
+    container.appendChild(item);
+    
+    const dayStr = d.toLocaleDateString();
+    if (!dailyStats[dayStr]) dailyStats[dayStr] = { focus: 0, break: 0, aborted: [] };
+    const mins = session.durationMs / 60000;
+    
+    if (session.type === 'Focus Timer') dailyStats[dayStr].focus += mins;
+    else if (session.type === 'Break Timer') dailyStats[dayStr].break += mins;
+    else if (session.type === 'Aborted Focus') dailyStats[dayStr].aborted.push(mins);
+  });
+  
+  const hours = Math.floor(totalMs / 3600000);
+  const minutes = Math.floor((totalMs % 3600000) / 60000);
+  totalEl.textContent = `${hours}h ${minutes}m`;
+
+  const labels = Object.keys(dailyStats);
+  const focusData = labels.map(day => dailyStats[day].focus);
+  const breakData = labels.map(day => dailyStats[day].break);
+  const abortedData = [];
+  labels.forEach(day => {
+    dailyStats[day].aborted.forEach(mins => {
+      abortedData.push({ x: day, y: mins });
+    });
+  });
+
+  const ctx = document.getElementById('statsChart').getContext('2d');
+  if (statsChartInstance) statsChartInstance.destroy();
+  
+  const isDark = document.body.classList.contains('dark-mode');
+  Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+  
+  statsChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'scatter', label: 'Aborted', data: abortedData,
+          backgroundColor: '#f43f5e', pointRadius: 5, pointHoverRadius: 7
+        },
+        {
+          type: 'line', label: 'Focus (m)', data: focusData,
+          borderColor: '#818cf8', backgroundColor: 'rgba(99, 102, 241, 0.2)',
+          borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3
+        },
+        {
+          type: 'line', label: 'Break (m)', data: breakData,
+          borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
+        x: { grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { boxWidth: 10, usePointStyle: true } }
+      }
+    }
   });
 }
 

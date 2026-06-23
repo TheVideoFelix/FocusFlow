@@ -48,13 +48,13 @@ api.runtime.onStartup.addListener(async () => {
 api.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'timerExpired') {
     // Record history
-    const data = await api.storage.local.get(['sessionHistory', 'lastTimerDuration']);
+    const data = await api.storage.local.get(['sessionHistory', 'timerStart']);
     const history = data.sessionHistory || [];
-    if (data.lastTimerDuration > 0) {
+    if (data.timerStart) {
       history.push({
         id: Date.now(),
         date: new Date().toISOString(),
-        durationMs: data.lastTimerDuration * 60000,
+        durationMs: Date.now() - data.timerStart,
         type: 'Focus Timer'
       });
     }
@@ -63,13 +63,26 @@ api.alarms.onAlarm.addListener(async (alarm) => {
     await api.storage.local.set({
       timerActive: false,
       timerEnd: 0,
+      timerStart: 0,
       isPaused: false,
       sessionHistory: history
     });
   } else if (alarm.name === 'breakExpired') {
+    const data = await api.storage.local.get(['sessionHistory', 'breakStart']);
+    const history = data.sessionHistory || [];
+    if (data.breakStart) {
+      history.push({
+        id: Date.now(),
+        date: new Date().toISOString(),
+        durationMs: Date.now() - data.breakStart,
+        type: 'Break Timer'
+      });
+    }
     await api.storage.local.set({
       breakActive: false,
-      breakEnd: 0
+      breakEnd: 0,
+      breakStart: 0,
+      sessionHistory: history
     });
   } else if (alarm.name === 'checkSchedules') {
     await evaluateBlockingState();
