@@ -1146,6 +1146,10 @@ button:disabled {
   color: var(--danger) !important;
 }
 
+.chip-danger button {
+  color: var(--danger) !important;
+}
+
 .chip-danger button:hover {
   background: rgba(239, 68, 68, 0.2);
   border-radius: 4px;
@@ -1154,6 +1158,10 @@ button:disabled {
 .chip-success {
   background: rgba(16, 185, 129, 0.1) !important;
   border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  color: var(--success) !important;
+}
+
+.chip-success button {
   color: var(--success) !important;
 }
 
