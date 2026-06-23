@@ -154,6 +154,7 @@
           <h3>Weekly Schedules</h3>
           <button id="btn-new-schedule" class="btn btn-secondary-sm">Add New</button>
         </div>
+        
         <div id="schedule-form-card" class="card form-card hidden animate-slide-down">
           <h4 id="schedule-form-title">Create Schedule</h4>
           <div class="form-group"><label>Name</label><input type="text" id="schedule-name" placeholder="e.g. Uni Studies" /></div>
@@ -178,15 +179,18 @@
             <button id="btn-save-schedule" class="btn btn-primary-sm">Save</button>
           </div>
         </div>
-        <div class="carousel-wrapper" id="schedules-carousel-wrapper">
-          <button class="carousel-btn carousel-btn-left hidden" id="btn-sch-prev">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+
+        <div class="carousel-controls" id="schedules-carousel-controls" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <button class="btn btn-secondary-sm hidden" id="btn-sch-prev" style="width: auto; padding: 4px 10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right: 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg> Prev
           </button>
-          <div id="schedules-list" class="schedules-list-container"></div>
-          <button class="carousel-btn carousel-btn-right hidden" id="btn-sch-next">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          <div style="flex-grow: 1;"></div>
+          <button class="btn btn-secondary-sm hidden" id="btn-sch-next" style="width: auto; padding: 4px 10px;">
+            Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-left: 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
+
+        <div id="schedules-list" class="schedules-list-container"></div>
         <p class="empty-state hidden" id="schedules-empty">No active schedules. Enjoy your free time!</p>
         
         <!-- Debug Export Button -->
