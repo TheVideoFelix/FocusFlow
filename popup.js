@@ -4,6 +4,7 @@ const api = typeof browser !== 'undefined' ? browser : chrome;
 let countdownInterval = null;
 let breakInterval = null;
 let selectedTimerMinutes = 25;
+let selectedBreakMinutes = 5;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initTheme();
@@ -24,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (changes.isCurrentlyBlocked || changes.timerActive || changes.timerEnd || changes.isPaused || changes.breakActive || changes.breakEnd) {
       await loadStatus();
-      // Re-render anti-cheat elements if block status changes
       await renderSites();
       await renderSchedules();
     }
@@ -143,30 +143,28 @@ async function loadStatus() {
       statusTitle.textContent = 'Focus Paused';
       statusText.textContent = 'Timer is paused. Distractions are temporarily accessible.';
       btnPause.textContent = 'Resume';
-      btnPause.classList.replace('btn-secondary', 'btn-primary');
+      btnPause.className = 'btn btn-primary'; // Standard primary for Resume
       renderStaticTime(data.remainingTimeMs);
     } else {
       statusCard.classList.add('active');
       statusTitle.textContent = 'Focus Mode Active';
       statusText.textContent = data.blockReason || 'Timer active';
       btnPause.textContent = 'Pause';
-      btnPause.classList.replace('btn-primary', 'btn-secondary');
+      btnPause.className = 'btn btn-warning-gradient'; // Warning gradient for Pause
       startLiveCountdown(data.timerEnd);
     }
     iconPath.setAttribute('d', 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z');
   } else {
     activeActions.style.display = 'none';
-    inactiveActions.style.display = 'block';
+    inactiveActions.style.display = 'flex';
     
     if (data.isCurrentlyBlocked) {
-      // Blocked by schedule
       statusCard.classList.add('active');
       statusTitle.textContent = 'Focus Mode Active';
       statusText.textContent = data.blockReason;
       countdownContainer.classList.add('hidden');
       iconPath.setAttribute('d', 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z');
     } else {
-      // Completely inactive
       statusCard.classList.remove('active');
       statusTitle.textContent = 'Standby Mode';
       statusText.textContent = 'All distracting sites are accessible.';
@@ -207,75 +205,93 @@ function renderStaticTime(ms, element = document.getElementById('timer-digits'))
 }
 
 function initTimerPanel() {
-  // Preset buttons
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    if (btn.getAttribute('data-duration') === '25') btn.classList.add('active');
+  // Focus Presets
+  const focusPresets = document.querySelectorAll('.focus-preset');
+  focusPresets.forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('custom-timer-form').classList.add('hidden');
-      if (btn.id === 'btn-custom-trigger') {
+      focusPresets.forEach(b => b.classList.remove('active'));
+      document.getElementById('custom-focus-form').classList.add('hidden');
+      if (btn.id === 'btn-custom-focus-trigger') {
         btn.classList.add('active');
-        document.getElementById('custom-timer-form').classList.remove('hidden');
+        document.getElementById('custom-focus-form').classList.remove('hidden');
       } else {
         btn.classList.add('active');
         selectedTimerMinutes = parseInt(btn.getAttribute('data-duration'), 10);
-        document.getElementById('btn-timer-action').textContent = `Start ${selectedTimerMinutes}m Focus Timer`;
+        document.getElementById('btn-focus-action').textContent = `Start ${selectedTimerMinutes}m Focus Timer`;
       }
     });
   });
 
-  // Start custom
-  document.getElementById('btn-custom-start').addEventListener('click', () => {
-    const val = parseInt(document.getElementById('custom-minutes').value, 10);
-    if (!val || val <= 0 || val > 1440) return alert('Enter a valid duration (1-1440 min).');
-    startTimer(val);
+  // Break Presets
+  const breakPresets = document.querySelectorAll('.break-preset');
+  breakPresets.forEach(btn => {
+    if (btn.getAttribute('data-duration') === '5') btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      breakPresets.forEach(b => b.classList.remove('active'));
+      document.getElementById('custom-break-form').classList.add('hidden');
+      if (btn.id === 'btn-custom-break-trigger') {
+        btn.classList.add('active');
+        document.getElementById('custom-break-form').classList.remove('hidden');
+      } else {
+        btn.classList.add('active');
+        selectedBreakMinutes = parseInt(btn.getAttribute('data-duration'), 10);
+        document.getElementById('btn-break-action').textContent = `Start ${selectedBreakMinutes}m Break`;
+      }
+    });
   });
 
-  // Start preset
-  document.getElementById('btn-timer-action').addEventListener('click', () => startTimer(selectedTimerMinutes));
+  // Focus Start
+  document.getElementById('btn-focus-action').addEventListener('click', () => {
+    let mins = selectedTimerMinutes;
+    if (!document.getElementById('custom-focus-form').classList.contains('hidden')) {
+      const val = parseInt(document.getElementById('custom-focus-minutes').value, 10);
+      if (!val || val <= 0 || val > 1440) return alert('Enter a valid duration (1-1440 min).');
+      mins = val;
+    }
+    startTimer(mins);
+  });
+
+  // Break Start
+  document.getElementById('btn-break-action').addEventListener('click', () => {
+    let mins = selectedBreakMinutes;
+    if (!document.getElementById('custom-break-form').classList.contains('hidden')) {
+      const val = parseInt(document.getElementById('custom-break-minutes').value, 10);
+      if (!val || val <= 0 || val > 1440) return alert('Enter a valid duration (1-1440 min).');
+      mins = val;
+    }
+    startBreak(mins);
+  });
 
   // Pause
   document.getElementById('btn-timer-pause').addEventListener('click', async () => {
     const data = await api.storage.local.get(['timerActive', 'isPaused', 'timerEnd', 'remainingTimeMs']);
     if (!data.timerActive) return;
     if (data.isPaused) {
-      // Resume
       await api.storage.local.set({ isPaused: false, timerEnd: Date.now() + data.remainingTimeMs });
     } else {
-      // Pause
       await api.storage.local.set({ isPaused: true, remainingTimeMs: data.timerEnd - Date.now() });
     }
   });
 
-  // Cancel Focus
+  // Cancel Focus / Break
   document.getElementById('btn-timer-cancel').addEventListener('click', async () => {
     await api.storage.local.set({ timerActive: false, timerEnd: 0, isPaused: false, lastTimerDuration: 0 });
   });
-
-  // Break Buttons
-  document.getElementById('btn-break-5').addEventListener('click', () => startBreak(5));
-  document.getElementById('btn-break-15').addEventListener('click', () => startBreak(15));
+  
   document.getElementById('btn-cancel-break').addEventListener('click', async () => {
     await api.storage.local.set({ breakActive: false, breakEnd: 0 });
   });
 }
 
 async function startTimer(minutes) {
-  // Clear breaks if any
   await api.storage.local.set({
-    timerActive: true,
-    timerEnd: Date.now() + minutes * 60000,
-    isPaused: false,
-    breakActive: false,
-    lastTimerDuration: minutes
+    timerActive: true, timerEnd: Date.now() + minutes * 60000,
+    isPaused: false, breakActive: false, lastTimerDuration: minutes
   });
 }
 
 async function startBreak(minutes) {
-  await api.storage.local.set({
-    breakActive: true,
-    breakEnd: Date.now() + minutes * 60000
-  });
+  await api.storage.local.set({ breakActive: true, breakEnd: Date.now() + minutes * 60000 });
 }
 
 /* ==========================================
@@ -288,13 +304,13 @@ async function initCurrentSiteBanner() {
   
   try {
     const tabs = await api.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length === 0 || !tabs[0].url) { banner.style.display = 'none'; return; }
-    
+    if (tabs.length === 0 || !tabs[0].url) return;
     const url = new URL(tabs[0].url);
-    if (!['http:', 'https:'].includes(url.protocol)) { banner.style.display = 'none'; return; }
+    if (!['http:', 'https:'].includes(url.protocol)) return;
     
     let domain = url.hostname.replace(/^www\./, '');
     domainText.textContent = domain;
+    banner.style.display = 'flex'; // Globally show it below header!
     
     blockBtn.onclick = async () => {
       const data = await api.storage.local.get('blockedSites');
@@ -333,8 +349,8 @@ async function renderSites() {
   const sites = data.blockedSites || [];
   const container = document.getElementById('sites-chips');
   
-  // Anti-cheat: disable inputs if blocked
-  document.getElementById('btn-block-current').disabled = data.isCurrentlyBlocked;
+  const curSiteBtn = document.getElementById('btn-block-current');
+  if(curSiteBtn) curSiteBtn.disabled = data.isCurrentlyBlocked;
   document.querySelector('#add-site-form button').disabled = data.isCurrentlyBlocked;
 
   container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
@@ -399,7 +415,6 @@ async function renderSchedules() {
       const idx = (i + 1) % 7;
       daysHtml += `<span class="schedule-day-badge ${schedule.days.includes(idx) ? 'active' : ''}">${dayNames[idx]}</span>`;
     }
-    // Anti-cheat: disable delete/toggle if blocked
     item.innerHTML = `
       <div class="schedule-item-info">
         <div class="schedule-item-title">${escapeHtml(schedule.name)}</div>
@@ -461,7 +476,6 @@ async function renderHistory() {
   totalEl.textContent = `${totalH}h ${totalM}m`;
   
   container.innerHTML = '';
-  // Show most recent first
   [...history].reverse().forEach(item => {
     const el = document.createElement('div');
     el.className = 'history-item';

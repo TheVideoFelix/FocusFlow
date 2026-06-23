@@ -1012,3 +1012,35 @@ button:disabled {
   font-size: 10px;
   color: var(--text-muted);
 }
+
+/* New Gradient Buttons */
+.btn-warning-gradient {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+  border: none;
+}
+
+.btn-warning-gradient:hover {
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+  opacity: 0.95;
+}
+
+.btn-success-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  border: none;
+}
+
+.btn-success-gradient:hover {
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+  opacity: 0.95;
+}
+
+/* Break Preset Overrides */
+.preset-btn.break-preset.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+  border-color: var(--success);
+}
