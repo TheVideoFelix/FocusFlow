@@ -263,6 +263,9 @@ function initTimerPanel() {
       if (btn.id === 'btn-custom-focus-trigger') {
         btn.classList.add('active');
         document.getElementById('custom-focus-form').classList.remove('hidden');
+        document.getElementById('btn-start-focus').textContent = 'Start Custom Focus';
+        const val = parseInt(document.getElementById('custom-focus-minutes').value, 10);
+        if (val > 0) document.getElementById('btn-start-focus').textContent = `Start ${val}m Focus`;
       } else {
         btn.classList.add('active');
         selectedTimerMinutes = parseInt(btn.getAttribute('data-duration'), 10);
@@ -280,12 +283,27 @@ function initTimerPanel() {
       if (btn.id === 'btn-custom-break-trigger') {
         btn.classList.add('active');
         document.getElementById('custom-break-form').classList.remove('hidden');
+        document.getElementById('btn-start-break').textContent = 'Start Custom Break';
+        const val = parseInt(document.getElementById('custom-break-minutes').value, 10);
+        if (val > 0) document.getElementById('btn-start-break').textContent = `Start ${val}m Break`;
       } else {
         btn.classList.add('active');
         selectedBreakMinutes = parseInt(btn.getAttribute('data-duration'), 10);
         document.getElementById('btn-start-break').textContent = `Start ${selectedBreakMinutes}m Break`;
       }
     });
+  });
+
+  document.getElementById('custom-focus-minutes').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value, 10);
+    if (val > 0) document.getElementById('btn-start-focus').textContent = `Start ${val}m Focus`;
+    else document.getElementById('btn-start-focus').textContent = 'Start Custom Focus';
+  });
+
+  document.getElementById('custom-break-minutes').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value, 10);
+    if (val > 0) document.getElementById('btn-start-break').textContent = `Start ${val}m Break`;
+    else document.getElementById('btn-start-break').textContent = 'Start Custom Break';
   });
 
   // Start Buttons
