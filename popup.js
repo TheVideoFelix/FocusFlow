@@ -553,7 +553,7 @@ async function renderSchedules() {
       <div class="schedule-sites" style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
         <div class="schedule-sites-title">Whitelist (Exceptions) for this Schedule</div>
         <div class="schedule-chips" id="sch-wl-chips-${schedule.id}"></div>
-        <form class="sch-wl-form" data-id="${schedule.id}">
+        <form class="sch-site-form sch-wl-form" data-id="${schedule.id}">
           <input type="text" placeholder="e.g. music.youtube.com" required />
           <button type="submit" class="btn btn-secondary-sm">Allow</button>
         </form>

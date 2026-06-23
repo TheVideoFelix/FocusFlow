@@ -1091,6 +1091,8 @@ button:disabled {
 }
 
 .schedule-days {
+  display: flex;
+  gap: 4px;
   font-size: 11px;
   color: var(--text-tertiary);
 }
