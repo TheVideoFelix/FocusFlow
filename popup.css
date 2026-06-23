@@ -1017,6 +1017,8 @@ button:disabled {
 .btn-warning-gradient {
   background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
   color: #ffffff;
+  padding: 12px 16px;
+  font-size: 14px;
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
   border: none;
   width: 100%;
@@ -1031,6 +1033,8 @@ button:disabled {
 .btn-success-gradient {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
+  padding: 12px 16px;
+  font-size: 14px;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
   border: none;
   width: 100%;
