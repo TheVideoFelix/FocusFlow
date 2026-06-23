@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    
+    <!-- Shield/Glass Glow -->
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05" />
+    </linearGradient>
+
+    <!-- Hourglass Glow -->
+    <linearGradient id="hgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f3e8ff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Rounded Square with Gradient -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bgGrad)" filter="drop-shadow(0px 8px 16px rgba(99, 102, 241, 0.3))" />
+
+  <!-- Shield Base for security/blocking -->
+  <path d="M64 24 L96 34 V68 C96 88 82 100 64 104 C46 100 32 88 32 68 V34 Z" fill="url(#glowGrad)" />
+
+  <!-- Inner Hourglass Design representing focus/time -->
+  <g transform="translate(48, 40)">
+    <!-- Top & Bottom Bars -->
+    <rect x="2" y="0" width="28" height="4" rx="2" fill="url(#hgGrad)" />
+    <rect x="2" y="44" width="28" height="4" rx="2" fill="url(#hgGrad)" />
+    
+    <!-- Hourglass Body (glass shape) -->
+    <path d="M4 4 
+             C4 18, 12 22, 16 24 
+             C12 26, 4 30, 4 44 
+             H28 
+             C28 30, 20 26, 16 24 
+             C20 22, 28 18, 28 4 
+             Z" 
+          fill="none" 
+          stroke="url(#hgGrad)" 
+          stroke-width="3.5" 
+          stroke-linejoin="round" />
+
+    <!-- Sand (Top part - depleting) -->
+    <path d="M6 7 H26 C26 14, 18 19, 16 22 C14 19, 6 14, 6 7 Z" fill="#fae8ff" opacity="0.8" />
+    
+    <!-- Sand (Bottom part - filling) -->
+    <path d="M12 28 C14 30, 6 36, 6 41 H26 C26 36, 18 30, 16 28 Z" fill="#ffffff" />
+    
+    <!-- Sand Drip -->
+    <line x1="16" y1="21" x2="16" y2="35" stroke="#ffffff" stroke-width="2" stroke-dasharray="2 3" opacity="0.9" />
+  </g>
+</svg>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="dark-mode">
+  <div class="app-container">
+    
+    <div id="permission-banner" class="banner hidden">
+      <div class="banner-content">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="icon-warning">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>Permission required to redirect blocked sites.</span>
+      </div>
+      <button id="btn-grant-permission" class="btn btn-warning-sm">Grant Access</button>
+    </div>
+
+    <header class="app-header">
+      <div class="logo-group">
+        <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+          <defs>
+            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#c084fc" />
+            </linearGradient>
+          </defs>
+          <rect width="128" height="128" rx="32" fill="url(#logoGrad)" />
+          <path d="M40 32 L88 32 C88 56 64 64 64 64 C64 64 40 56 40 32 Z" fill="#ffffff" opacity="0.9" />
+          <path d="M40 96 L88 96 C88 72 64 64 64 64 C64 64 40 72 40 96 Z" fill="#ffffff" />
+        </svg>
+        <h1>Focus<span>Flow</span></h1>
+      </div>
+      <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme">
+        <svg id="icon-sun" class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+        </svg>
+        <svg id="icon-moon" class="icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </header>
+
+    <section class="card status-card" id="status-card">
+      <div class="status-indicator">
+        <div class="status-ring">
+          <div class="pulse-ring"></div>
+          <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path id="status-icon-path" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+      </div>
+      <div class="status-details">
+        <h2 id="status-title">Focus Block Inactive</h2>
+        <p id="status-text">Ready to block distractions.</p>
+        <div id="live-countdown" class="countdown-display hidden">
+          <span class="digits" id="timer-digits">00:00</span>
+          <span class="label">remaining</span>
+        </div>
+      </div>
+    </section>
+
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-timer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Timer
+      </button>
+      <button class="tab-btn" data-tab="tab-schedules">
+        <svg xmlns="http://www.w3.org/2000/svg" class="tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg> Schedules
+      </button>
+      <button class="tab-btn" data-tab="tab-sites">
+        <svg xmlns="http://www.w3.org/2000/svg" class="tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg> Blocklist
+      </button>
+      <button class="tab-btn" data-tab="tab-history">
+        <svg xmlns="http://www.w3.org/2000/svg" class="tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg> Stats
+      </button>
+    </nav>
+
+    <main class="tab-content-container">
+      
+      <!-- TAB 1: TIMER -->
+      <div id="tab-timer" class="tab-pane active">
+        <div class="timer-section">
+          <h3>Quick Focus Timer</h3>
+          <p class="section-desc">Instantly block distractions.</p>
+          
+          <div class="timer-presets" id="focus-presets">
+            <button class="preset-btn" data-duration="15">15m</button>
+            <button class="preset-btn" data-duration="25">25m</button>
+            <button class="preset-btn" data-duration="45">45m</button>
+            <button class="preset-btn" data-duration="60">1h</button>
+            <button class="preset-btn" data-duration="120">2h</button>
+            <button class="preset-btn" id="btn-custom-trigger">Custom</button>
+          </div>
+          
+          <div id="custom-timer-form" class="custom-timer-input-group hidden animate-slide-down">
+            <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Minutes" />
+            <button id="btn-custom-start" class="btn btn-primary-sm">Start</button>
+          </div>
+
+          <!-- Active Timer Actions -->
+          <div class="action-row" id="active-actions" style="display: none; gap: 8px;">
+             <button id="btn-timer-pause" class="btn btn-secondary">Pause</button>
+             <button id="btn-timer-cancel" class="btn btn-danger-sm">Cancel Focus</button>
+          </div>
+          
+          <!-- Inactive Timer Actions -->
+          <div class="action-row" id="inactive-actions">
+            <button id="btn-timer-action" class="btn btn-primary">Start 25m Focus Timer</button>
+          </div>
+
+          <!-- Break Timer Section -->
+          <div class="break-section" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+             <h3>Take a Break</h3>
+             <div class="action-row" id="break-inactive-actions">
+                <button class="btn btn-secondary-sm" id="btn-break-5">5m</button>
+                <button class="btn btn-secondary-sm" id="btn-break-15">15m</button>
+             </div>
+             <div class="action-row hidden" id="break-active-actions" style="display: flex; gap: 8px; align-items: center;">
+                <span id="break-countdown" style="font-weight: bold; color: var(--success); flex-grow: 1;">00:00</span>
+                <button id="btn-cancel-break" class="btn btn-danger-sm">Stop Break</button>
+             </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB 2: SCHEDULES -->
+      <div id="tab-schedules" class="tab-pane">
+        <div class="schedules-header">
+          <h3>Weekly Schedules</h3>
+          <button id="btn-new-schedule" class="btn btn-secondary-sm">Add</button>
+        </div>
+        <p class="section-desc">Set recurring blocking blocks.</p>
+        
+        <div id="schedule-form-card" class="card form-card hidden animate-slide-down">
+          <h4 id="schedule-form-title">Create Schedule</h4>
+          <div class="form-group">
+            <label>Schedule Name</label>
+            <input type="text" id="schedule-name" placeholder="e.g. Uni Studies" />
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Start</label><input type="time" id="schedule-start" value="08:00" /></div>
+            <div class="form-group"><label>End</label><input type="time" id="schedule-end" value="16:00" /></div>
+          </div>
+          <div class="form-group">
+            <label>Active Days</label>
+            <div class="day-selector">
+              <button type="button" class="day-btn" data-day="1">M</button>
+              <button type="button" class="day-btn" data-day="2">T</button>
+              <button type="button" class="day-btn" data-day="3">W</button>
+              <button type="button" class="day-btn" data-day="4">T</button>
+              <button type="button" class="day-btn" data-day="5">F</button>
+              <button type="button" class="day-btn" data-day="6">S</button>
+              <button type="button" class="day-btn" data-day="0">S</button>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button id="btn-cancel-schedule" class="btn btn-text">Cancel</button>
+            <button id="btn-save-schedule" class="btn btn-primary-sm">Save</button>
+          </div>
+        </div>
+        <div id="schedules-list" class="schedules-list-container"></div>
+      </div>
+      
+      <!-- TAB 3: BLOCK LIST -->
+      <div id="tab-sites" class="tab-pane">
+        <div class="sites-section">
+          <h3>Manage Blocked Sites</h3>
+          <p class="section-desc">Add domains you want to block.</p>
+          
+          <!-- Smart Add Current Site -->
+          <div class="current-site-banner" id="current-site-banner">
+             <div class="domain-info" id="current-site-domain">Loading...</div>
+             <button id="btn-block-current" class="btn btn-primary-sm">+ Block Current Site</button>
+          </div>
+
+          <form id="add-site-form" class="add-site-group">
+            <input type="text" id="site-domain" placeholder="e.g. youtube.com" required />
+            <button type="submit" class="btn btn-secondary-sm">Add</button>
+          </form>
+          
+          <div id="sites-chips" class="sites-chips-container"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: HISTORY -->
+      <div id="tab-history" class="tab-pane">
+         <div class="history-section">
+            <div class="stats-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+               <h3>Focus History</h3>
+               <button id="btn-clear-history" class="btn btn-danger-sm">Clear All</button>
+            </div>
+            <div class="total-focus-card card" style="text-align: center; margin-bottom: 16px; padding: 12px;">
+               <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Focus Time</div>
+               <div id="total-focus-time" style="font-size: 24px; font-family: var(--font-display); font-weight: 700; color: var(--accent-light);">0h 0m</div>
+            </div>
+            <div id="history-list" class="schedules-list-container"></div>
+         </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+     <div class="modal-card">
+        <h3 id="modal-title">Delete History?</h3>
+        <p id="modal-text">Are you sure you want to delete all your focus stats? This cannot be undone.</p>
+        <div class="form-actions">
+           <button id="btn-modal-cancel" class="btn btn-text">Cancel</button>
+           <button id="btn-modal-confirm" class="btn btn-danger-sm">Yes, Delete</button>
+        </div>
+     </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

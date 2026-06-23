@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Mode Active | FocusFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="blocked.css">
+</head>
+<body class="dark-mode"> <!-- Matches user selection from storage, default dark -->
+  <div class="blocked-container">
+    
+    <main class="blocked-card animate-scale-up">
+      <!-- Animated Hourglass Icon -->
+      <div class="icon-container">
+        <div class="ring-outer"></div>
+        <div class="ring-inner"></div>
+        <svg class="block-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="80" height="80">
+          <defs>
+            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#a855f7" />
+            </linearGradient>
+            <linearGradient id="sandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff" />
+              <stop offset="100%" stop-color="#f3e8ff" />
+            </linearGradient>
+          </defs>
+          <!-- Shield/Shield outline background -->
+          <rect width="128" height="128" rx="36" fill="url(#shieldGrad)" />
+          
+          <!-- Hourglass Symbol -->
+          <g transform="translate(40, 36)" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <!-- Top/Bottom Plates -->
+            <line x1="4" y1="2" x2="44" y2="2" />
+            <line x1="4" y1="54" x2="44" y2="54" />
+            
+            <!-- Glass Body -->
+            <path d="M6 6 C6 24, 20 26, 24 28 C28 26, 42 24, 42 6" />
+            <path d="M6 50 C6 32, 20 30, 24 28 C28 30, 42 32, 42 50" />
+            
+            <!-- Dripping Sand -->
+            <line x1="24" y1="26" x2="24" y2="38" stroke-dasharray="2 4" />
+            
+            <!-- Filling Sand (filled) -->
+            <path d="M12 44 C16 42, 32 42, 36 44 L40 50 H8 Z" fill="#ffffff" stroke="none" />
+            <!-- Emptying Sand -->
+            <path d="M10 8 H38 C34 16, 28 22, 24 24 C20 22, 14 16, 10 8 Z" fill="url(#sandGrad)" stroke="none" opacity="0.7" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Main Messages -->
+      <h1 class="title">Time to Focus</h1>
+      <p class="subtitle">This website is blocked to help you focus on your studies and university work.</p>
+
+      <!-- Status Card with Timer or Schedule -->
+      <div id="block-info-box" class="info-box">
+        <span class="info-label">Focus Mode Status</span>
+        <div id="countdown-wrapper" class="countdown-large hidden">
+          <span id="timer-digits">00:00</span>
+          <span class="countdown-unit">remaining</span>
+        </div>
+        <div id="schedule-wrapper" class="schedule-details hidden">
+          <p id="schedule-text">Blocked by schedule</p>
+        </div>
+      </div>
+
+      <!-- Motivational Quote Section -->
+      <div class="quote-container">
+        <p id="quote-text" class="quote">"The secret of getting ahead is getting started."</p>
+        <p id="quote-author" class="quote-author">— Mark Twain</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-buttons">
+        <button id="btn-back" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Go Back
+        </button>
+        <button id="btn-new-tab" class="btn btn-secondary">
+          Open New Tab
+        </button>
+      </div>
+    </main>
+
+  </div>
+  <script src="blocked.js"></script>
+</body>
+</html>
