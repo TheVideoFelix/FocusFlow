@@ -544,8 +544,8 @@ async function renderSchedules() {
         <div class="schedule-sites-title">Blocked Sites for this Schedule</div>
         <div class="schedule-chips" id="sch-chips-${schedule.id}"></div>
         <form class="sch-site-form" data-id="${schedule.id}">
-          <input type="text" placeholder="e.g. twitch.tv" required ${data.isCurrentlyBlocked ? 'disabled' : ''}/>
-          <button type="submit" class="btn btn-secondary-sm" ${data.isCurrentlyBlocked ? 'disabled' : ''}>Add</button>
+          <input type="text" placeholder="e.g. twitch.tv" required />
+          <button type="submit" class="btn btn-secondary-sm">Add</button>
         </form>
       </div>
     `;
@@ -577,25 +577,23 @@ async function renderSchedules() {
     }
     
     // Form listener
-    if (!data.isCurrentlyBlocked) {
-      item.querySelector('.sch-site-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = e.target.querySelector('input');
-        let domain = input.value.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
-        if (!/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(domain)) return alert('Invalid domain');
-        
-        const d = await api.storage.local.get('schedules');
-        const schedulesList = d.schedules || [];
-        const target = schedulesList.find(s => s.id === schedule.id);
-        if (target) {
-          if (!target.blockedSites) target.blockedSites = [];
-          if (!target.blockedSites.includes(domain)) {
-            target.blockedSites.push(domain);
-            await api.storage.local.set({ schedules: schedulesList });
-          }
+    item.querySelector('.sch-site-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = e.target.querySelector('input');
+      let domain = input.value.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+      if (!/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(domain)) return alert('Invalid domain');
+      
+      const d = await api.storage.local.get('schedules');
+      const schedulesList = d.schedules || [];
+      const target = schedulesList.find(s => s.id === schedule.id);
+      if (target) {
+        if (!target.blockedSites) target.blockedSites = [];
+        if (!target.blockedSites.includes(domain)) {
+          target.blockedSites.push(domain);
+          await api.storage.local.set({ schedules: schedulesList });
         }
-      });
-    }
+      }
+    });
     
     if (!data.isCurrentlyBlocked) {
       item.querySelector('.schedule-toggle').addEventListener('change', async (e) => {
