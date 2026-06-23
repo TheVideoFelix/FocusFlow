@@ -199,10 +199,10 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
         priority: 1,
         action: { 
           type: 'redirect', 
-          redirect: { regexSubstitution: api.runtime.getURL('/blocked.html') + '?url=\\0' } 
+          redirect: { extensionPath: '/blocked.html' } 
         },
         condition: { 
-          regexFilter: `^https?://([^/]+\\.)?${domain.replace(/\\./g, '\\\\.')}(/.*)?$`, 
+          urlFilter: `||${domain}`, 
           resourceTypes: ['main_frame'] 
         }
       });
@@ -214,7 +214,7 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
         priority: 2,
         action: { type: 'allow' },
         condition: { 
-          regexFilter: `^https?://([^/]+\\.)?${domain.replace(/\\./g, '\\\\.')}(/.*)?$`, 
+          urlFilter: `||${domain}`, 
           resourceTypes: ['main_frame'] 
         }
       });
