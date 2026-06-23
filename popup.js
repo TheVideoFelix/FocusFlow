@@ -333,7 +333,7 @@ async function initCurrentSiteBanners() {
     
     [btnSites, btnSchedules].forEach(btn => {
       if (!btn) return;
-      btn.textContent = `+ Block ${domain}`;
+      btn.textContent = '+ Block Current Site';
       btn.classList.remove('hidden');
       
       btn.onclick = async () => {
