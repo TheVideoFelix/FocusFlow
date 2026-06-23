@@ -206,7 +206,7 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
           priority: 1,
           action: { 
             type: 'redirect', 
-            redirect: { extensionPath: '/blocked.html' } 
+            redirect: { extensionPath: `/blocked.html?d=${encodeURIComponent(domain.trim())}` } 
           },
           condition: { 
             urlFilter: `||${domain.trim()}`, 
@@ -271,31 +271,32 @@ async function enforceBlockingOnOpenTabs(sites, whitelist) {
 
 // Secondary Unbreachable Firewall: Catch any navigation that slips past DNR
 api.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.url) {
-    if (changeInfo.url.startsWith('about:') || changeInfo.url.startsWith('moz-extension:') || changeInfo.url.startsWith('chrome-extension:')) return;
+  const currentUrl = changeInfo.url || tab.url;
+  if (!currentUrl) return;
+  
+  if (currentUrl.startsWith('about:') || currentUrl.startsWith('moz-extension:') || currentUrl.startsWith('chrome-extension:')) return;
+  
+  const data = await api.storage.local.get(['isCurrentlyBlocked', 'blockedSites', 'whitelist']);
+  if (data.isCurrentlyBlocked) {
+    const sites = data.blockedSites || [];
+    const whitelist = data.whitelist || [];
     
-    const data = await api.storage.local.get(['isCurrentlyBlocked', 'blockedSites', 'whitelist']);
-    if (data.isCurrentlyBlocked) {
-      const sites = data.blockedSites || [];
-      const whitelist = data.whitelist || [];
+    try {
+      const urlObj = new URL(currentUrl);
+      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') return;
       
-      try {
-        const urlObj = new URL(changeInfo.url);
-        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') return;
-        
-        const host = urlObj.hostname.toLowerCase();
-        
-        const isWhitelisted = whitelist.some(w => host === w || host.endsWith('.' + w));
-        if (isWhitelisted) return;
-        
-        const isBlocked = sites.some(s => host === s || host.endsWith('.' + s));
-        if (isBlocked) {
-          const redirectUrl = api.runtime.getURL('/blocked.html') + '?url=' + encodeURIComponent(changeInfo.url);
-          await api.tabs.update(tabId, { url: redirectUrl });
-        }
-      } catch (e) {
-        // Invalid URL
+      const host = urlObj.hostname.toLowerCase();
+      
+      const isWhitelisted = whitelist.some(w => host === w || host.endsWith('.' + w));
+      if (isWhitelisted) return;
+      
+      const isBlocked = sites.some(s => host === s || host.endsWith('.' + s));
+      if (isBlocked) {
+        const redirectUrl = api.runtime.getURL('/blocked.html') + '?url=' + encodeURIComponent(currentUrl);
+        await api.tabs.update(tabId, { url: redirectUrl });
       }
+    } catch (e) {
+      // Invalid URL
     }
   }
 });
