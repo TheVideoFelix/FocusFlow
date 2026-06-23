@@ -895,6 +895,7 @@ input:checked:disabled + .slider {
   padding: 30px 10px;
   text-align: center;
   border: 1px dashed var(--border-color);
+  background: transparent;
   border-radius: 12px;
   color: var(--text-muted);
 }
@@ -993,7 +994,8 @@ input:checked:disabled + .slider {
 
 /* History Items */
 .history-item {
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
   padding: 12px 8px;
   display: flex;
   justify-content: space-between;
