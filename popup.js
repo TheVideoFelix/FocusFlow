@@ -106,6 +106,12 @@ function initTabs() {
     tabPanes.forEach(pane => {
       pane.classList.toggle('active', pane.id === tabId);
     });
+    
+    if (tabId === 'tab-schedules') {
+      // Trigger scroll so the carousel button logic can re-evaluate with actual width
+      const container = document.getElementById('schedules-list');
+      if (container) container.dispatchEvent(new Event('scroll'));
+    }
   }
 
   tabButtons.forEach(button => {
@@ -706,9 +712,14 @@ async function renderSchedules() {
       newNextBtn.disabled = container.scrollLeft + container.clientWidth >= container.scrollWidth - 10;
     };
     
-    setTimeout(updateButtons, 50);
-    requestAnimationFrame(updateButtons);
+    // Listen for scroll events
     container.addEventListener('scroll', updateButtons);
+    
+    // Listen for size changes (e.g., tab switching from display: none to block)
+    const resizeObserver = new ResizeObserver(() => {
+      updateButtons();
+    });
+    resizeObserver.observe(container);
     
     newPrevBtn.addEventListener('click', () => {
       container.scrollBy({ left: -container.clientWidth, behavior: 'smooth' });
