@@ -46,27 +46,8 @@ api.runtime.onStartup.addListener(async () => {
 });
 
 api.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'timerExpired') {
-    // Record history
-    const data = await api.storage.local.get(['sessionHistory', 'timerStart']);
-    const history = data.sessionHistory || [];
-    if (data.timerStart) {
-      history.push({
-        id: Date.now(),
-        date: new Date().toISOString(),
-        durationMs: Date.now() - data.timerStart,
-        type: 'Focus Timer'
-      });
-    }
-    
-    // Timer finished naturally!
-    await api.storage.local.set({
-      timerActive: false,
-      timerEnd: 0,
-      timerStart: 0,
-      isPaused: false,
-      sessionHistory: history
-    });
+  if (alarm.name === 'timerExpired' || alarm.name === 'checkSchedules') {
+    await evaluateBlockingState();
   } else if (alarm.name === 'breakExpired') {
     const data = await api.storage.local.get(['sessionHistory', 'breakStart']);
     const history = data.sessionHistory || [];
@@ -84,8 +65,6 @@ api.alarms.onAlarm.addListener(async (alarm) => {
       breakStart: 0,
       sessionHistory: history
     });
-  } else if (alarm.name === 'checkSchedules') {
-    await evaluateBlockingState();
   }
 });
 
@@ -136,8 +115,24 @@ async function evaluateBlockingState() {
           api.alarms.create('timerExpired', { when: timerEnd });
         }
       } else {
-        // Timer expired
-        await api.storage.local.set({ timerActive: false, timerEnd: 0 });
+        // Timer expired naturally
+        const histData = await api.storage.local.get(['sessionHistory', 'timerStart']);
+        const history = histData.sessionHistory || [];
+        if (histData.timerStart) {
+          history.push({
+            id: Date.now(),
+            date: new Date().toISOString(),
+            durationMs: Date.now() - histData.timerStart,
+            type: 'Focus Timer'
+          });
+        }
+        await api.storage.local.set({ 
+          timerActive: false, 
+          timerEnd: 0, 
+          timerStart: 0, 
+          isPaused: false,
+          sessionHistory: history 
+        });
         await api.alarms.clear('timerExpired');
       }
     } else {

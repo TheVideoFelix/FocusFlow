@@ -22,15 +22,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   api.storage.onChanged.addListener(async (changes, namespace) => {
     if (namespace !== 'local') return;
-    if (changes.isCurrentlyBlocked || changes.timerActive || changes.timerEnd || changes.isPaused || changes.breakActive || changes.breakEnd) {
+    if (changes.blockedSites || changes.whitelist || changes.isCurrentlyBlocked || changes.schedules) {
       await loadStatus();
       await renderSites();
       await renderSchedules();
     }
-    if (changes.schedules) await renderSchedules();
-    if (changes.blockedSites) await renderSites();
-    if (changes.sessionHistory) await renderHistory();
-    if (changes.theme) await applyThemePref(changes.theme.newValue);
+    if (changes.timerActive || changes.timerEnd || changes.isPaused || changes.breakActive || changes.breakEnd || changes.remainingTimeMs) {
+      await loadStatus();
+    }
+    if (changes.sessionHistory) {
+      await renderHistory();
+    }
+    if (changes.theme) {
+      await applyThemePref(changes.theme.newValue);
+    }
   });
 });
 
