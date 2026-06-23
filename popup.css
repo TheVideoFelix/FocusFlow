@@ -180,6 +180,28 @@ body {
   height: 18px;
 }
 
+.btn-carousel-nav {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.btn-carousel-nav:hover:not(:disabled) {
+  color: var(--accent-light);
+  background: var(--accent-glow);
+}
+
+.btn-carousel-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* Glassmorphism Cards */
 .card {
   background: var(--bg-card);

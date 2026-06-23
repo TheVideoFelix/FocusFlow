@@ -702,14 +702,12 @@ async function renderSchedules() {
   } else {
     controlsRow.style.display = 'flex';
     const updateButtons = () => {
-      if (container.scrollLeft <= 10) newPrevBtn.classList.add('hidden');
-      else newPrevBtn.classList.remove('hidden');
-      
-      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) newNextBtn.classList.add('hidden');
-      else newNextBtn.classList.remove('hidden');
+      newPrevBtn.disabled = container.scrollLeft <= 10;
+      newNextBtn.disabled = container.scrollLeft + container.clientWidth >= container.scrollWidth - 10;
     };
     
     setTimeout(updateButtons, 50);
+    requestAnimationFrame(updateButtons);
     container.addEventListener('scroll', updateButtons);
     
     newPrevBtn.addEventListener('click', () => {
