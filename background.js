@@ -215,7 +215,11 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
         rulesToAdd.push({
           id: ruleIdCounter++,
           priority: 1,
-          action: { type: 'block' },
+          action: { 
+            type: 'redirect', 
+            redirect: { extensionPath: `/blocked.html?d=${encodeURIComponent(domain.trim())}` } 
+          },
+          // action: { type: 'block' }, // Kept for testing if needed
           condition: { 
             urlFilter: `||${domain.trim()}`, 
             resourceTypes: ['main_frame'] 
