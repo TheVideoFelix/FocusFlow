@@ -101,6 +101,7 @@ async function evaluateBlockingState() {
     let shouldBlock = false;
     let blockReason = '';
     let activeSites = new Set();
+    let activeWhitelist = new Set(whitelist);
     
     if (timerActive) {
       if (isPaused) {
@@ -169,6 +170,8 @@ async function evaluateBlockingState() {
           activeScheduleIds.push(schedule.id);
           const schSites = schedule.blockedSites || [];
           schSites.forEach(s => activeSites.add(s));
+          const schWhitelist = schedule.whitelist || [];
+          schWhitelist.forEach(s => activeWhitelist.add(s));
         }
       }
     }
@@ -180,19 +183,21 @@ async function evaluateBlockingState() {
     }
     
     const finalSitesToBlock = Array.from(activeSites);
+    const finalWhitelist = Array.from(activeWhitelist);
     
-    await updateBlockingRules(finalSitesToBlock, whitelist, shouldBlock);
+    await updateBlockingRules(finalSitesToBlock, finalWhitelist, shouldBlock);
     
     await api.storage.local.set({
       isCurrentlyBlocked: shouldBlock,
       blockReason: blockReason,
       activeBlockedSites: finalSitesToBlock,
-      activeScheduleIds: activeScheduleIds
+      activeScheduleIds: activeScheduleIds,
+      activeWhitelist: finalWhitelist
     });
     
     // Immediately sweep open tabs to enforce new block rules without requiring a reload
     if (shouldBlock && finalSitesToBlock.length > 0) {
-      await enforceBlockingOnOpenTabs(finalSitesToBlock, whitelist);
+      await enforceBlockingOnOpenTabs(finalSitesToBlock, finalWhitelist);
     }
   } catch (err) {
     console.error('Error evaluating blocking state:', err);
@@ -291,10 +296,10 @@ api.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   
   if (currentUrl.startsWith('about:') || currentUrl.startsWith('moz-extension:') || currentUrl.startsWith('chrome-extension:')) return;
   
-  const data = await api.storage.local.get(['isCurrentlyBlocked', 'activeBlockedSites', 'whitelist']);
+  const data = await api.storage.local.get(['isCurrentlyBlocked', 'activeBlockedSites', 'activeWhitelist']);
   if (data.isCurrentlyBlocked) {
     const sites = data.activeBlockedSites || [];
-    const whitelist = data.whitelist || [];
+    const whitelist = data.activeWhitelist || [];
     
     try {
       const urlObj = new URL(currentUrl);

@@ -550,10 +550,18 @@ async function renderSchedules() {
           <button type="submit" class="btn btn-secondary-sm">Add</button>
         </form>
       </div>
+      <div class="schedule-sites" style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <div class="schedule-sites-title">Whitelist (Exceptions) for this Schedule</div>
+        <div class="schedule-chips" id="sch-wl-chips-${schedule.id}"></div>
+        <form class="sch-wl-form" data-id="${schedule.id}">
+          <input type="text" placeholder="e.g. music.youtube.com" required />
+          <button type="submit" class="btn btn-secondary-sm">Allow</button>
+        </form>
+      </div>
     `;
     
     // Render the chips
-    const chipsContainer = item.querySelector('.schedule-chips');
+    const chipsContainer = item.querySelector('#sch-chips-' + schedule.id);
     const schSites = schedule.blockedSites || [];
     if (schSites.length === 0) {
       chipsContainer.innerHTML = '<span style="font-size:11px;color:var(--text-tertiary);">No sites added yet.</span>';
@@ -577,6 +585,34 @@ async function renderSchedules() {
         chipsContainer.appendChild(chip);
       });
     }
+
+    // Render whitelist chips
+    const wlChipsContainer = item.querySelector('#sch-wl-chips-' + schedule.id);
+    const schWhitelist = schedule.whitelist || [];
+    if (schWhitelist.length === 0) {
+      wlChipsContainer.innerHTML = '<span style="font-size:11px;color:var(--text-tertiary);">No exceptions added.</span>';
+    } else {
+      schWhitelist.forEach(site => {
+        const chip = document.createElement('div');
+        chip.className = 'sch-site-chip';
+        chip.style.borderColor = 'var(--success)';
+        chip.style.color = 'var(--success)';
+        chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-wl" data-site="${escapeHtml(site)}" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+        if (!activeIds.includes(schedule.id)) {
+          chip.querySelector('.btn-remove-sch-wl').onclick = async (e) => {
+            const sDomain = e.currentTarget.getAttribute('data-site');
+            const d = await api.storage.local.get('schedules');
+            const schedulesList = d.schedules || [];
+            const target = schedulesList.find(s => s.id === schedule.id);
+            if (target) {
+              target.whitelist = (target.whitelist || []).filter(s => s !== sDomain);
+              await api.storage.local.set({ schedules: schedulesList });
+            }
+          };
+        }
+        wlChipsContainer.appendChild(chip);
+      });
+    }
     
     // Form listener
     item.querySelector('.sch-site-form').addEventListener('submit', async (e) => {
@@ -592,6 +628,25 @@ async function renderSchedules() {
         if (!target.blockedSites) target.blockedSites = [];
         if (!target.blockedSites.includes(domain)) {
           target.blockedSites.push(domain);
+          await api.storage.local.set({ schedules: schedulesList });
+        }
+      }
+    });
+
+    // Whitelist Form listener
+    item.querySelector('.sch-wl-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = e.target.querySelector('input');
+      let domain = input.value.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+      if (!/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(domain)) return alert('Invalid domain');
+      
+      const d = await api.storage.local.get('schedules');
+      const schedulesList = d.schedules || [];
+      const target = schedulesList.find(s => s.id === schedule.id);
+      if (target) {
+        if (!target.whitelist) target.whitelist = [];
+        if (!target.whitelist.includes(domain)) {
+          target.whitelist.push(domain);
           await api.storage.local.set({ schedules: schedulesList });
         }
       }
