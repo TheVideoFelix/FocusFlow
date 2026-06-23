@@ -186,45 +186,53 @@ async function evaluateBlockingState() {
 }
 
 async function updateBlockingRules(domains, whitelist, blockActive) {
-  const existingRules = await api.declarativeNetRequest.getDynamicRules();
-  const existingIds = existingRules.map(r => r.id);
-  
-  const rulesToAdd = [];
-  let ruleIdCounter = 1;
-  
-  if (blockActive && domains.length > 0) {
-    domains.forEach((domain) => {
-      rulesToAdd.push({
-        id: ruleIdCounter++,
-        priority: 1,
-        action: { 
-          type: 'redirect', 
-          redirect: { url: api.runtime.getURL('/blocked.html') } 
-        },
-        condition: { 
-          urlFilter: `||${domain}`, 
-          resourceTypes: ['main_frame'] 
-        }
-      });
-    });
+  try {
+    const existingRules = await api.declarativeNetRequest.getDynamicRules();
+    const existingIds = existingRules.map(r => r.id);
     
-    whitelist.forEach((domain) => {
-      rulesToAdd.push({
-        id: ruleIdCounter++,
-        priority: 2,
-        action: { type: 'allow' },
-        condition: { 
-          urlFilter: `||${domain}`, 
-          resourceTypes: ['main_frame'] 
-        }
+    const rulesToAdd = [];
+    let ruleIdCounter = 1;
+    
+    if (blockActive) {
+      const validDomains = domains.filter(d => typeof d === 'string' && d.trim().length > 0);
+      validDomains.forEach((domain) => {
+        rulesToAdd.push({
+          id: ruleIdCounter++,
+          priority: 1,
+          action: { 
+            type: 'redirect', 
+            redirect: { extensionPath: '/blocked.html' } 
+          },
+          condition: { 
+            urlFilter: `||${domain.trim()}`, 
+            resourceTypes: ['main_frame'] 
+          }
+        });
       });
+      
+      const validWhitelist = whitelist.filter(w => typeof w === 'string' && w.trim().length > 0);
+      validWhitelist.forEach((domain) => {
+        rulesToAdd.push({
+          id: ruleIdCounter++,
+          priority: 2,
+          action: { type: 'allow' },
+          condition: { 
+            urlFilter: `||${domain.trim()}`, 
+            resourceTypes: ['main_frame'] 
+          }
+        });
+      });
+    }
+    
+    await api.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: existingIds,
+      addRules: rulesToAdd
     });
+  } catch (err) {
+    console.error("DNR Update Error:", err);
+    // Pop a diagnostics tab so the user can report the exact error
+    await api.tabs.create({ url: 'data:text/plain;charset=utf-8,' + encodeURIComponent('FocusFlow Firewall Error: ' + err.message + '\n\nPlease copy this exact message and send it to the AI assistant!') });
   }
-  
-  await api.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: existingIds,
-    addRules: rulesToAdd
-  });
 }
 
 async function enforceBlockingOnOpenTabs(sites, whitelist) {
