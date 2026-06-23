@@ -530,8 +530,10 @@ async function renderSchedules() {
       <div class="schedule-header">
         <div class="schedule-info">
           <span class="schedule-name">${escapeHtml(schedule.name)}</span>
-          <span class="schedule-time">${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}</span>
-          <span class="schedule-days">${daysHtml}</span>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px;">
+            <span class="schedule-time">${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}</span>
+            <span class="schedule-days">${daysHtml}</span>
+          </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
           <label class="switch">
