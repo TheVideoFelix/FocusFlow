@@ -743,6 +743,7 @@ function initHistoryModal() {
 }
 
 let statsChartInstance = null;
+let currentHistoryLimit = 10;
 
 async function renderHistory() {
   const data = await api.storage.local.get('sessionHistory');
@@ -761,12 +762,26 @@ async function renderHistory() {
   container.innerHTML = '';
   
   const dailyStats = {};
+  const reversedHistory = history.slice().reverse();
   
-  history.slice().reverse().forEach(session => {
+  reversedHistory.forEach(session => {
     if (session.type === 'Focus Timer') totalMs += session.durationMs || 0;
     
+    const d = new Date(session.date);
+    const dayStr = d.toLocaleDateString();
+    if (!dailyStats[dayStr]) dailyStats[dayStr] = { focus: 0, break: 0, aborted: [] };
+    const mins = session.durationMs / 60000;
+    
+    if (session.type === 'Focus Timer') dailyStats[dayStr].focus += mins;
+    else if (session.type === 'Break Timer') dailyStats[dayStr].break += mins;
+    else if (session.type === 'Aborted Focus') dailyStats[dayStr].aborted.push(mins);
+  });
+
+  reversedHistory.slice(0, currentHistoryLimit).forEach(session => {
     const item = document.createElement('div');
-    item.className = 'history-item';
+    item.className = 'history-item card';
+    item.style.padding = '12px';
+    item.style.marginBottom = '0';
     const d = new Date(session.date);
     let typeColor = 'var(--accent-light)';
     let dotColor = 'var(--accent)';
@@ -786,21 +801,24 @@ async function renderHistory() {
                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${dotColor};"></span>
                ${session.type || 'Focus'}
             </div>
-            <div style="font-size: 11px; color: var(--text-muted);">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</div>
          </div>
          <div style="font-weight: 700; color: ${typeColor};">${Math.round(session.durationMs / 60000)}m</div>
       </div>
     `;
     container.appendChild(item);
-    
-    const dayStr = d.toLocaleDateString();
-    if (!dailyStats[dayStr]) dailyStats[dayStr] = { focus: 0, break: 0, aborted: [] };
-    const mins = session.durationMs / 60000;
-    
-    if (session.type === 'Focus Timer') dailyStats[dayStr].focus += mins;
-    else if (session.type === 'Break Timer') dailyStats[dayStr].break += mins;
-    else if (session.type === 'Aborted Focus') dailyStats[dayStr].aborted.push(mins);
   });
+  
+  const loadMoreBtn = document.getElementById('btn-load-more-history');
+  if (reversedHistory.length > currentHistoryLimit) {
+    loadMoreBtn.classList.remove('hidden');
+    loadMoreBtn.onclick = () => {
+      currentHistoryLimit += 10;
+      renderHistory();
+    };
+  } else {
+    loadMoreBtn.classList.add('hidden');
+  }
   
   const hours = Math.floor(totalMs / 3600000);
   const minutes = Math.floor((totalMs % 3600000) / 60000);
