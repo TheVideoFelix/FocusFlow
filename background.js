@@ -175,6 +175,11 @@ async function evaluateBlockingState() {
       isCurrentlyBlocked: shouldBlock,
       blockReason: blockReason
     });
+    
+    // Immediately sweep open tabs to enforce new block rules without requiring a reload
+    if (shouldBlock) {
+      await enforceBlockingOnOpenTabs(sites, whitelist);
+    }
   } catch (err) {
     console.error('Error evaluating blocking state:', err);
   }
@@ -220,4 +225,33 @@ async function updateBlockingRules(domains, whitelist, blockActive) {
     removeRuleIds: existingIds,
     addRules: rulesToAdd
   });
+}
+
+async function enforceBlockingOnOpenTabs(sites, whitelist) {
+  try {
+    const tabs = await api.tabs.query({});
+    for (const tab of tabs) {
+      if (!tab.url || tab.url.startsWith('about:') || tab.url.startsWith('moz-extension:') || tab.url.startsWith('chrome-extension:')) continue;
+      
+      try {
+        const urlObj = new URL(tab.url);
+        const host = urlObj.hostname.toLowerCase();
+        
+        // 1. Check if whitelisted
+        const isWhitelisted = whitelist.some(w => host === w || host.endsWith('.' + w));
+        if (isWhitelisted) continue;
+        
+        // 2. Check if blocked
+        const isBlocked = sites.some(s => host === s || host.endsWith('.' + s));
+        if (isBlocked) {
+          const redirectUrl = api.runtime.getURL('/blocked.html') + '?url=' + encodeURIComponent(tab.url);
+          await api.tabs.update(tab.id, { url: redirectUrl });
+        }
+      } catch (e) {
+        // Invalid URL, skip
+      }
+    }
+  } catch (err) {
+    console.error('Error sweeping open tabs:', err);
+  }
 }
