@@ -764,6 +764,15 @@ input:checked + .slider:before {
   transform: translateX(14px);
 }
 
+input:disabled + .slider {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input:checked:disabled + .slider {
+  background-color: var(--text-muted);
+}
+
 /* Action Icon Buttons */
 .btn-delete-schedule, .btn-edit-schedule {
   background: transparent;
