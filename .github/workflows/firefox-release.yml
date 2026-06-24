@@ -1,0 +1,36 @@
+name: Firefox Add-on Release
+
+on:
+  push:
+    branches:
+      - main # Triggers the workflow ONLY when code is pushed or merged into the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Mozilla web-ext CLI
+        run: npm install -g web-ext
+
+      - name: Package Extension (Zip)
+        run: |
+          # Build the extension using web-ext, ignoring development files
+          web-ext build --ignore-files "README.md" ".github" "test*" "*.log" "firefox_deployment_plan.md" ".git" ".agents" --overwrite-dest
+          echo "Extension packaged successfully!"
+
+      - name: Submit to Mozilla Add-ons (AMO)
+        run: |
+          # The channel=listed flag publishes it publicly on the Firefox add-on store.
+          web-ext sign --channel=listed --api-key="${{ secrets.AMO_JWT_ISSUER }}" --api-secret="${{ secrets.AMO_JWT_SECRET }}"
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
