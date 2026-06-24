@@ -444,11 +444,19 @@ async function renderSites() {
   document.querySelector('#add-site-form button').disabled = false;
   document.querySelector('#add-whitelist-form button').disabled = data.timerActive;
 
-  container.innerHTML = sites.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No domains blocked.</p>';
+  container.textContent = '';
+  if (!sites.length) {
+    const p = document.createElement('p');
+    p.className = 'section-desc';
+    p.style.cssText = 'width:100%;text-align:center;';
+    p.textContent = 'No domains blocked.';
+    container.appendChild(p);
+  }
   sites.forEach(site => {
     const chip = document.createElement('div');
     chip.className = `site-chip chip-danger ${data.timerActive ? 'disabled' : ''}`;
-    chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+    chip.innerHTML = '<span></span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>';
+    chip.querySelector('span').textContent = site;
     if (!data.timerActive) {
       chip.querySelector('.btn-remove-site').onclick = async () => {
         const d = await api.storage.local.get('blockedSites');
@@ -458,13 +466,21 @@ async function renderSites() {
     container.appendChild(chip);
   });
 
-  wContainer.innerHTML = whitelist.length ? '' : '<p class="section-desc" style="width:100%;text-align:center;">No exceptions.</p>';
+  wContainer.textContent = '';
+  if (!whitelist.length) {
+    const p = document.createElement('p');
+    p.className = 'section-desc';
+    p.style.cssText = 'width:100%;text-align:center;';
+    p.textContent = 'No exceptions.';
+    wContainer.appendChild(p);
+  }
   whitelist.forEach(site => {
     const chip = document.createElement('div');
     chip.className = `site-chip chip-success ${data.timerActive ? 'disabled' : ''}`;
     chip.style.borderColor = 'var(--success)';
     chip.style.color = 'var(--success)';
-    chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+    chip.innerHTML = '<span></span><button class="btn-remove-site"><svg class="icon-close" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>';
+    chip.querySelector('span').textContent = site;
     if (!data.timerActive) {
       chip.querySelector('.btn-remove-site').onclick = async () => {
         const d = await api.storage.local.get('whitelist');
@@ -545,46 +561,61 @@ async function renderSchedules() {
   schedules.forEach(schedule => {
     const item = document.createElement('div');
     item.className = 'schedule-card';
-    let daysHtml = '';
-    for (let i = 0; i < 7; i++) {
-      const idx = (i + 1) % 7;
-      daysHtml += `<span class="schedule-day-badge ${schedule.days.includes(idx) ? 'active' : ''}">${dayNames[idx]}</span>`;
-    }
     item.innerHTML = `
       <div class="schedule-header">
         <div class="schedule-info">
-          <span class="schedule-name">${escapeHtml(schedule.name)}</span>
+          <span class="schedule-name"></span>
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px;">
-            <span class="schedule-time">${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}</span>
-            <span class="schedule-days">${daysHtml}</span>
+            <span class="schedule-time"></span>
+            <span class="schedule-days"></span>
           </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
           <label class="switch">
-            <input type="checkbox" class="schedule-toggle" ${schedule.enabled ? 'checked' : ''} ${activeIds.includes(schedule.id) ? 'disabled' : ''}/>
+            <input type="checkbox" class="schedule-toggle" />
             <span class="slider"></span>
           </label>
-          <button class="btn-edit-schedule" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-          <button class="btn-delete-schedule" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+          <button class="btn-edit-schedule"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+          <button class="btn-delete-schedule"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
         </div>
       </div>
       <div class="schedule-sites">
         <div class="schedule-sites-title">Blocked Sites for this Schedule</div>
-        <div class="schedule-chips" id="sch-chips-${schedule.id}"></div>
-        <form class="sch-site-form" data-id="${schedule.id}">
+        <div class="schedule-chips"></div>
+        <form class="sch-site-form">
           <input type="text" placeholder="e.g. twitch.tv" required />
           <button type="submit" class="btn btn-secondary-sm btn-danger-gradient">Add</button>
         </form>
       </div>
       <div class="schedule-sites" style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
         <div class="schedule-sites-title">Whitelist (Exceptions) for this Schedule</div>
-        <div class="schedule-chips" id="sch-wl-chips-${schedule.id}"></div>
-        <form class="sch-site-form sch-wl-form" data-id="${schedule.id}">
+        <div class="schedule-chips"></div>
+        <form class="sch-site-form sch-wl-form">
           <input type="text" placeholder="e.g. music.youtube.com" required />
           <button type="submit" class="btn btn-secondary-sm btn-success-gradient">Allow</button>
         </form>
       </div>
     `;
+    item.querySelector('.schedule-name').textContent = schedule.name;
+    item.querySelector('.schedule-time').textContent = formatTime(schedule.startTime) + ' - ' + formatTime(schedule.endTime);
+    for (let i = 0; i < 7; i++) {
+      const idx = (i + 1) % 7;
+      const sp = document.createElement('span');
+      sp.className = 'schedule-day-badge' + (schedule.days.includes(idx) ? ' active' : '');
+      sp.textContent = dayNames[idx];
+      item.querySelector('.schedule-days').appendChild(sp);
+    }
+    const tgl = item.querySelector('.schedule-toggle');
+    if (schedule.enabled) tgl.checked = true;
+    if (activeIds.includes(schedule.id)) {
+      tgl.disabled = true;
+      item.querySelector('.btn-edit-schedule').disabled = true;
+      item.querySelector('.btn-delete-schedule').disabled = true;
+    }
+    item.querySelectorAll('.schedule-chips')[0].id = 'sch-chips-' + schedule.id;
+    item.querySelectorAll('.sch-site-form')[0].dataset.id = schedule.id;
+    item.querySelectorAll('.schedule-chips')[1].id = 'sch-wl-chips-' + schedule.id;
+    item.querySelectorAll('.sch-wl-form')[0].dataset.id = schedule.id;
     
     // Render the chips
     const chipsContainer = item.querySelector('#sch-chips-' + schedule.id);
@@ -595,7 +626,11 @@ async function renderSchedules() {
       schSites.forEach(site => {
         const chip = document.createElement('div');
         chip.className = 'sch-site-chip chip-danger';
-        chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-site" data-site="${escapeHtml(site)}" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+        chip.innerHTML = '<span></span><button class="btn-remove-sch-site"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>';
+        chip.querySelector('span').textContent = site;
+        const btn = chip.querySelector('.btn-remove-sch-site');
+        btn.dataset.site = site;
+        if (activeIds.includes(schedule.id)) btn.disabled = true;
         if (!activeIds.includes(schedule.id)) {
           chip.querySelector('.btn-remove-sch-site').onclick = async (e) => {
             const sDomain = e.currentTarget.getAttribute('data-site');
@@ -623,7 +658,11 @@ async function renderSchedules() {
         chip.className = 'sch-site-chip chip-success';
         chip.style.borderColor = 'var(--success)';
         chip.style.color = 'var(--success)';
-        chip.innerHTML = `<span>${escapeHtml(site)}</span><button class="btn-remove-sch-wl" data-site="${escapeHtml(site)}" ${activeIds.includes(schedule.id) ? 'disabled' : ''}><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+        chip.innerHTML = '<span></span><button class="btn-remove-sch-wl"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M6 18L18 6M6 6l12 12"/></svg></button>';
+        chip.querySelector('span').textContent = site;
+        const btnWl = chip.querySelector('.btn-remove-sch-wl');
+        btnWl.dataset.site = site;
+        if (activeIds.includes(schedule.id)) btnWl.disabled = true;
         if (!activeIds.includes(schedule.id)) {
           chip.querySelector('.btn-remove-sch-wl').onclick = async (e) => {
             const sDomain = e.currentTarget.getAttribute('data-site');
@@ -814,14 +853,19 @@ async function renderHistory() {
       <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
          <div style="display:flex; flex-direction:column;">
             <div style="font-weight: 600; font-size: 13px; display:flex; align-items:center; gap: 6px;">
-               <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${dotColor};"></span>
-               ${session.type || 'Focus'}
+               <span class="hist-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%;"></span>
+               <span class="hist-type"></span>
             </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</div>
+            <div class="hist-date" style="font-size: 11px; color: var(--text-muted); margin-top: 4px;"></div>
          </div>
-         <div style="font-weight: 700; color: ${typeColor};">${Math.round(session.durationMs / 60000)}m</div>
+         <div class="hist-dur" style="font-weight: 700;"></div>
       </div>
     `;
+    item.querySelector('.hist-dot').style.backgroundColor = dotColor;
+    item.querySelector('.hist-type').textContent = session.type || 'Focus';
+    item.querySelector('.hist-date').textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    item.querySelector('.hist-dur').textContent = Math.round(session.durationMs / 60000) + 'm';
+    item.querySelector('.hist-dur').style.color = typeColor;
     container.appendChild(item);
   });
   

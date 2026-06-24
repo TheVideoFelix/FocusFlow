@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FocusFlow",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "GPL-3.0",
   "description": "Block distracting websites like YouTube during custom hours or timer intervals to help you focus on your studies.",
   "browser_specific_settings": {
